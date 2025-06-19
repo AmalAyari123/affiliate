@@ -3,11 +3,11 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import FeedNavigator from "./FeedNavigator";
-import CartScreen from "./CartScreen";
 import transactions from "../screens/transactions";
 import DataAffiliate from "../screens/DataAffiliate";
 import Feather from '@expo/vector-icons/Feather';
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
+import CartScreen from "../screens/CartScreen";
 
 
 const Tab = createBottomTabNavigator();

@@ -184,7 +184,7 @@ headerContainer: {
   },
   sectionTitle: {
     fontSize: 20,
-       color: "#E67E22",
+       color: "#2C3E50",
 
     fontWeight: 'bold',
         fontFamily: 'Roboto-Medium',

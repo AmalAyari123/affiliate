@@ -12,6 +12,7 @@
     "@expo-google-fonts/roboto": "^0.4.0",
     "@expo-google-fonts/tajawal": "^0.4.0",
     "@expo/vector-icons": "^14.1.0",
+    "@react-native-async-storage/async-storage": "2.1.2",
     "@react-navigation/bottom-tabs": "^7.3.15",
     "@react-navigation/native": "^7.1.11",
     "@react-navigation/stack": "^7.3.4",
@@ -21,22 +22,24 @@
     "expo-font": "~13.3.1",
     "expo-splash-screen": "~0.30.9",
     "expo-status-bar": "~2.2.3",
+    "lottie-react-native": "7.2.2",
     "react": "19.0.0",
     "react-native": "0.79.3",
     "react-native-expo-image-cache": "^4.1.0",
     "react-native-paper": "^5.14.5",
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "~4.11.1",
+    "react-native-svg": "^15.12.0",
     "react-native-swiper-flatlist": "^3.2.5",
-    "react-native-vector-icons": "^10.2.0",
-    "lottie-react-native": "7.2.2"
+    "react-native-vector-icons": "^10.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
     "@eslint/js": "^9.29.0",
     "eslint-config-expo": "^9.2.0",
     "eslint-plugin-react": "^7.37.5",
-    "globals": "^16.2.0"
+    "globals": "^16.2.0",
+    "react-native-svg-transformer": "^1.5.1"
   },
   "private": true
 }

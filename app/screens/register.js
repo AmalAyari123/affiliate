@@ -193,6 +193,7 @@ const styles = StyleSheet.create({
     color: '#1F2937',
     textAlign: 'center',
     writingDirection: 'rtl',
+    fontFamily: 'Tajawal-Regular'
   },
   formContainer: {
     backgroundColor: '#FFFFFF',

@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useContext } from 'react';
+
 import {
   View,
   Text,
@@ -13,14 +14,22 @@ import { Feather } from '@expo/vector-icons';
 import { SwiperFlatList } from 'react-native-swiper-flatlist';
 import AppText from '../components/AppText';
 import { useRoute } from '@react-navigation/native';
+import Card from '../components/Card';
+import CartContext from '../api/cartContext';
+import { useNavigation } from '@react-navigation/native';
+
 
 const { width } = Dimensions.get('window');
 const ACCENT = '#FF6B35';
 const YELLOW = '#FACC15';
 
-const ListingDetails = ({ navigation }) => {
+const ListingDetails = () => {
   const route = useRoute();
+    const navigation = useNavigation();
+      
+
   const product = route.params?.product;
+  const { cartItems, addToCart, removeFromCart } = useContext(CartContext);
 
   if (!product) {
     return (
@@ -70,8 +79,13 @@ const ListingDetails = ({ navigation }) => {
         <View>
           <Text style={styles.price}>${product.price}</Text>
         </View>
-        <TouchableOpacity style={styles.addButton}>
-          <Text style={styles.addButtonText}>Partager</Text>
+        <TouchableOpacity style={styles.addButton}
+          onPress={() => {
+            addToCart({ ...product, quantity: 1 });
+            navigation.navigate("CartScreen");
+          }}
+        >
+          <Text style={styles.addButtonText}>Ajouter</Text>
         </TouchableOpacity>
       </View>
 

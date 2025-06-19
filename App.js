@@ -13,6 +13,7 @@ import SplashScreenn from './app/screens/splash';
 import navigationTheme from './app/navigation/navigationTheme';
 import { ProductProvider } from './app/api/ProductsContext';
 import { CategorieProvider } from './app/api/CategoriesContext';
+import { CartProvider } from './app/api/cartContext';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -29,7 +30,7 @@ export default function App() {
   useEffect(() => {
     const prepare = async () => {
       await new Promise(resolve => setTimeout(resolve, 1500));
-      setUser(true); // simulate auth
+      setUser(false); // simulate auth
     };
     prepare();
   }, []);
@@ -47,6 +48,7 @@ export default function App() {
     <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
       <ProductProvider>
         <CategorieProvider>
+          <CartProvider>
           <NavigationContainer theme={navigationTheme}>
             {showSplash ? (
               <SplashScreenn />
@@ -56,6 +58,7 @@ export default function App() {
               <AuthNavigation />
             )}
           </NavigationContainer>
+        </CartProvider>
         </CategorieProvider>
       </ProductProvider>
     </View>
