@@ -1,230 +1,392 @@
-import React, { useEffect, useContext } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  ScrollView,
-  Image,
-  TouchableOpacity,
-  TextInput,
-  Dimensions,
-  SafeAreaView,
-  Platform,
-  StatusBar
-} from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { Feather } from '@expo/vector-icons';
-import ProductContext from '../api/ProductsContext';
-import CategorieContext from '../api/CategoriesContext';
-import Card from '../components/Card';
-import AppText from '../components/AppText';
-import colors from '../config/colors';
-import LottieView from 'lottie-react-native'; // ✅ Add this at the top
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ImageBackground, Image } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import { TrendingUp, DollarSign, Users, Eye, Bell, Gift, Target, Zap, User } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
+import { router } from 'expo-router';
+import { useLanguage } from '../hooks/useLanguage';
+import  AppHeader from '../components/AppHeader';
 
-const { width } = Dimensions.get('window');
+const Dashboard = () => {
+  const { t } = useTranslation();
+  const { isRTL } = useLanguage();
 
-const ListingScreen = () => {
-  const navigation = useNavigation();
-  const { listings, loadListings } = useContext(ProductContext);
-  const { categories, loadCategories } = useContext(CategorieContext);
+  const dashboardStats = [
+    { title: t('dashboard.totalEarnings'), value: '$2,450.00', icon: DollarSign, color: '#FF6B35', change: '+12.5%' },
+    { title: t('dashboard.activeReferrals'), value: '156', icon: Users, color: '#1E40AF', change: '+8.2%' },
+    { title: t('dashboard.commissionRate'), value: '15%', icon: TrendingUp, color: '#7C3AED', change: '+2.0%' },
+    { title: t('dashboard.totalClicks'), value: '1,234', icon: Eye, color: '#059669', change: '+18.7%' },
+  ];
 
-  useEffect(() => {
-    loadListings();
-    loadCategories();
-  }, []);
+  const recentActivities = [
+    { type: 'commission', description: t('dashboard.commissionEarned', { name: 'John Doe' }), amount: '+$45.00', time: '2 hours ago' },
+    { type: 'referral', description: t('dashboard.newReferralSignup'), amount: 'New user', time: '4 hours ago' },
+    { type: 'payment', description: t('dashboard.paymentApproved'), amount: '+$200.00', time: '1 day ago' },
+    { type: 'click', description: t('dashboard.bannerClicked', { count: 15 }), amount: '15 clicks', time: '2 days ago' },
+  ];
+
+  const promotionalBanners = [
+    {
+      title: 'Wamia Special Offer',
+      subtitle: 'Get 25% extra commission this month!',
+      image: 'https://images.pexels.com/photos/3184465/pexels-photo-3184465.jpeg?auto=compress&cs=tinysrgb&w=800',
+    },
+    {
+      title: 'Referral Bonus',
+      subtitle: 'Earn $50 for every 10 referrals',
+      image: 'https://images.pexels.com/photos/3184292/pexels-photo-3184292.jpeg?auto=compress&cs=tinysrgb&w=800',
+    },
+  ];
 
   return (
-    <SafeAreaView style={styles.screen}>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-
+    <SafeAreaView style={[styles.container, isRTL && styles.rtlContainer]} edges={['top']}>
+      <AppHeader
+        title={t('navigation.dashboard')}
+        variant="gradient"
+        showLogo={true}
+        showActions={true}
+      />
       
-
-        {/* Search Bar */}
-        <View style={styles.searchContainer}>
-          <Feather name="search" size={20} color="#9CA3AF" style={{ marginRight: 8 }} />
-          <TextInput
-            placeholder="Search Product"
-            placeholderTextColor="#9CA3AF"
-            style={styles.searchInput}
-          />
-             <Image
-            source={require('../../assets/Wamia_Icon_Black.png')}
-            style={styles.searchIcon}
-          />
-
-
+      <ScrollView 
+        style={styles.scrollView} 
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Welcome Section */}
+        <View style={[styles.welcomeSection, isRTL && styles.rtlWelcomeSection]}>
+          <Text style={[styles.welcomeText, isRTL && styles.rtlText]}>{t('dashboard.welcomeBack')}</Text>
+          <Text style={[styles.nameText, isRTL && styles.rtlText]}>Wamia Ambassador</Text>
         </View>
 
-          {/* Greeting and Icon */}
-     <View style={styles.headerContainer}>
-  <Text style={styles.greetingText}>مرحبا بيك في ومية!</Text>
-  <LottieView
-    source={require('../../assets/animations/animation.json')}
-    autoPlay
-    loop
-    style={styles.greetingAnimation}
-  />
-</View>
+        {/* Promotional Banners */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.bannerContainer}>
+          {promotionalBanners.map((banner, index) => (
+            <TouchableOpacity key={index} style={styles.bannerCard}>
+              <ImageBackground
+                source={{ uri: banner.image }}
+                style={styles.bannerImage}
+                imageStyle={styles.bannerImageStyle}
+              >
+                <LinearGradient
+                  colors={['rgba(255, 107, 53, 0.8)', 'rgba(30, 64, 175, 0.8)']}
+                  style={styles.bannerOverlay}
+                >
+                  <Text style={[styles.bannerTitle, isRTL && styles.rtlText]}>{banner.title}</Text>
+                  <Text style={[styles.bannerSubtitle, isRTL && styles.rtlText]}>{banner.subtitle}</Text>
+                </LinearGradient>
+              </ImageBackground>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
 
-
-        {/* Categories */}
-        <View style={styles.sectionHeaderRow}>
-          <Text style={styles.sectionTitle}>Categories</Text>
+        {/* Stats Grid */}
+        <View style={[styles.statsGrid, isRTL && styles.rtlStatsGrid]}>
+          {dashboardStats.map((stat, index) => (
+            <TouchableOpacity key={index} style={styles.statCard}>
+              <View style={[styles.statIcon, { backgroundColor: `${stat.color}15` }]}>
+                <stat.icon size={24} color={stat.color} />
+              </View>
+              <Text style={[styles.statValue, isRTL && styles.rtlText]}>{stat.value}</Text>
+              <Text style={[styles.statTitle, isRTL && styles.rtlText]}>{stat.title}</Text>
+              <View style={[styles.statChange, isRTL && styles.rtlStatChange]}>
+                <TrendingUp size={12} color="#059669" />
+                <Text style={[styles.changeText, isRTL && styles.rtlText]}>{stat.change}</Text>
+              </View>
+            </TouchableOpacity>
+          ))}
         </View>
-        <FlatList
-          data={categories}
-          keyExtractor={item => item.id.toString()}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.categoryList}
-          renderItem={({ item }) => (
-            <View style={styles.categoryItem}>
-              <Image source={{ uri: item.image }} style={styles.categoryImage} />
-              <Text style={styles.categoryLabel}>{item.name}</Text>
+
+        {/* Quick Actions */}
+        <Text style={[styles.sectionTitle, isRTL && styles.rtlText]}>{t('dashboard.quickActions')}</Text>
+        <View style={[styles.quickActions, isRTL && styles.rtlQuickActions]}>
+          <TouchableOpacity style={styles.actionButton}>
+            <View style={[styles.actionIcon, { backgroundColor: '#FF6B3515' }]}>
+              <Gift size={24} color="#FF6B35" />
             </View>
-          )}
-        />
-
-        {/* Products to Promote */}
-        <View style={styles.sectionHeaderRow}>
-          <Text style={styles.sectionTitle}>Produits à Promouvoir</Text>
-        </View>
-        <FlatList
-          data={listings}
-          keyExtractor={(item) => item.id.toString()}
-          numColumns={2}
-          columnWrapperStyle={{ justifyContent: 'space-between' }}
-          scrollEnabled={false}
-          renderItem={({ item }) => (
-            <View style={styles.cardWrapper}>
-              <Card
-                title={item.title}
-                subTitle={
-                  <View>
-                    <AppText style={styles.priceText}>${item.price}</AppText>
-                    <AppText style={styles.commissionText}>Commission $15</AppText>
-                  </View>
-                }
-                onPress={() => navigation.navigate("ListingDetails", { product: item })}
-                imageUrl={item.images[0]}
-              />
+            <Text style={[styles.actionText, isRTL && styles.rtlText]}>{t('dashboard.inviteFriends')}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionButton}>
+            <View style={[styles.actionIcon, { backgroundColor: '#05966915' }]}>
+              <Target size={24} color="#059669" />
             </View>
-          )}
-        />
+            <Text style={[styles.actionText, isRTL && styles.rtlText]}>{t('dashboard.trackOrders')}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionButton}>
+            <View style={[styles.actionIcon, { backgroundColor: '#1E40AF15' }]}>
+              <Zap size={24} color="#1E40AF" />
+            </View>
+            <Text style={[styles.actionText, isRTL && styles.rtlText]}>{t('dashboard.withdraw')}</Text>
+          </TouchableOpacity>
+        </View>
 
+        {/* Recent Activity */}
+        <Text style={[styles.sectionTitle, isRTL && styles.rtlText]}>{t('dashboard.recentActivity')}</Text>
+        <View style={styles.activityContainer}>
+          {recentActivities.map((activity, index) => (
+            <View key={index} style={[styles.activityItem, isRTL && styles.rtlActivityItem]}>
+              <View style={[styles.activityIcon, { 
+                backgroundColor: activity.type === 'commission' ? '#05966915' : 
+                                activity.type === 'referral' ? '#FF6B3515' : 
+                                activity.type === 'payment' ? '#1E40AF15' : '#F59E0B15' 
+              }]}>
+                <View style={[styles.activityDot, {
+                  backgroundColor: activity.type === 'commission' ? '#059669' : 
+                                  activity.type === 'referral' ? '#FF6B35' : 
+                                  activity.type === 'payment' ? '#1E40AF' : '#F59E0B'
+                }]} />
+              </View>
+              <View style={[styles.activityContent, isRTL && styles.rtlActivityContent]}>
+                <Text style={[styles.activityDescription, isRTL && styles.rtlText]}>{activity.description}</Text>
+                <Text style={[styles.activityTime, isRTL && styles.rtlText]}>{activity.time}</Text>
+              </View>
+              <Text style={[styles.activityAmount, { 
+                color: activity.amount.includes('+') ? '#059669' : '#64748B' 
+              }, isRTL && styles.rtlText]}>
+                {activity.amount}
+              </Text>
+            </View>
+          ))}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  greetingAnimation: {
-  width: 150,
-  height: 150,
-  marginTop: 5,
-},
-
-  screen: {
-    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
-    flex: 1,
-    backgroundColor: '#F7F8FA',
-  },
   container: {
     flex: 1,
-    paddingHorizontal: 12,
+    backgroundColor: '#F8FAFC',
   },
-headerContainer: {
-  alignItems: 'center',
-  justifyContent: 'center',
-  marginVertical: 15,
-  flexDirection: 'column',
-},
-
-  searchIcon: {
-  width: 22,
-  height: 22,
-  marginLeft: 8,
-  resizeMode: 'contain',
-},
-
-  headerIcon: {
-    width: 40,
-    height: 40,
-    resizeMode: 'contain',
-    marginRight: 10,
-  },
-  greetingText: {
-    fontSize: 31,
-    color: "#E67E22",
-    fontWeight: 'bold',
-        fontFamily: 'Tajawal-Regular',
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    height: 44,
-    borderWidth: 1,
-    borderColor: '#f0f0f0',
-    marginBottom: 10,
-    marginTop: 20
-  },
-  searchInput: {
+  scrollView: {
     flex: 1,
-    fontSize: 16,
   },
-  sectionHeaderRow: {
+  scrollContent: {
+    paddingBottom: 100, // Added padding to ensure content is not cut off by tab bar
+  },
+  welcomeSection: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: '#FFFFFF',
+    marginBottom: 8,
+  },
+  welcomeText: {
+    fontSize: 16,
+    color: '#64748B',
+    fontFamily: 'Inter-Regular',
+  },
+  nameText: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#0F172A',
+    fontFamily: 'Inter-Bold',
+    marginTop: 4,
+  },
+  bannerContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 24,
+  },
+  bannerCard: {
+    width: 280,
+    height: 120,
+    marginRight: 16,
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  bannerImage: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  bannerImageStyle: {
+    borderRadius: 16,
+  },
+  bannerOverlay: {
+    padding: 16,
+    height: '100%',
+    justifyContent: 'flex-end',
+  },
+  bannerTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    fontFamily: 'Inter-Bold',
+  },
+  bannerSubtitle: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    fontFamily: 'Inter-Regular',
+    opacity: 0.9,
+  },
+  statsGrid: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    paddingHorizontal: 20,
+    marginBottom: 32,
+  },
+  statCard: {
+    width: '48%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    marginRight: '2%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  statIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginVertical: 10,
+    marginBottom: 12,
+  },
+  statValue: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#0F172A',
+    fontFamily: 'Inter-Bold',
+    marginBottom: 4,
+  },
+  statTitle: {
+    fontSize: 14,
+    color: '#64748B',
+    fontFamily: 'Inter-Regular',
+    marginBottom: 8,
+  },
+  statChange: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  changeText: {
+    fontSize: 12,
+    color: '#059669',
+    fontFamily: 'Inter-Medium',
+    marginLeft: 4,
   },
   sectionTitle: {
     fontSize: 20,
-       color: "#2C3E50",
-
-    fontWeight: 'bold',
-        fontFamily: 'Roboto-Medium',
+    fontWeight: '700',
+    color: '#0F172A',
+    fontFamily: 'Inter-Bold',
+    paddingHorizontal: 20,
+    marginBottom: 16,
   },
-  categoryList: {
-    paddingVertical: 10,
+  quickActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    marginBottom: 32,
   },
-  categoryItem: {
-    alignItems: 'center',
-    marginHorizontal: 9,
-  },
-  categoryImage: {
-    height: 60,
-    width: 60,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.danger,
-  },
-  categoryLabel: {
-    fontSize: 12,
-    textAlign: 'center',
-    marginTop: 5,
-  },
-  productList: {
-    paddingVertical: 10,
-  },
-  cardWrapper: {
+  actionButton: {
     flex: 1,
-    margin: 8,
+    alignItems: 'center',
+    marginHorizontal: 8,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    paddingVertical: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  priceText: {
-    fontWeight: 'bold',
-    fontSize: 15,
-    color: '#232323',
+  actionIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
   },
-  commissionText: {
-    color: 'green',
-    fontWeight: '600',
+  actionText: {
+    fontSize: 12,
+    color: '#64748B',
+    fontFamily: 'Inter-Medium',
+    textAlign: 'center',
+  },
+  activityContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 32,
+  },
+  activityItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  activityIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  activityDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  activityContent: {
+    flex: 1,
+  },
+  activityDescription: {
     fontSize: 14,
+    color: '#0F172A',
+    fontFamily: 'Inter-Medium',
+    marginBottom: 2,
+  },
+  activityTime: {
+    fontSize: 12,
+    color: '#64748B',
+    fontFamily: 'Inter-Regular',
+  },
+  activityAmount: {
+    fontSize: 14,
+    fontFamily: 'Inter-SemiBold',
+  },
+  // RTL styles
+  rtlContainer: {
+    writingDirection: 'rtl',
+  },
+  rtlText: {
+    textAlign: 'right',
+    writingDirection: 'rtl',
+  },
+  rtlWelcomeSection: {
+    alignItems: 'flex-end',
+  },
+  rtlStatsGrid: {
+    flexDirection: 'row-reverse',
+  },
+  rtlQuickActions: {
+    flexDirection: 'row-reverse',
+  },
+  rtlActivityItem: {
+    flexDirection: 'row-reverse',
+  },
+  rtlActivityContent: {
+    alignItems: 'flex-end',
+  },
+  rtlStatChange: {
+    flexDirection: 'row-reverse',
   },
 });
 
-export default ListingScreen;
+export default Dashboard;

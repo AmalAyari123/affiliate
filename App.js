@@ -1,3 +1,5 @@
+import './app/i18n';
+
 import React, { useCallback, useEffect, useState } from 'react';
 import { View } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
@@ -11,9 +13,7 @@ import AuthNavigation from './app/navigation/AuthNavigation';
 import AppNavigator from './app/navigation/AppNavigator';
 import SplashScreenn from './app/screens/splash';
 import navigationTheme from './app/navigation/navigationTheme';
-import { ProductProvider } from './app/api/ProductsContext';
-import { CategorieProvider } from './app/api/CategoriesContext';
-import { CartProvider } from './app/api/cartContext';
+
 
 SplashScreen.preventAutoHideAsync();
 
@@ -29,8 +29,9 @@ export default function App() {
 
   useEffect(() => {
     const prepare = async () => {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      setUser(false); // simulate auth
+      // simulate loading assets, auth check, etc.
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      setUser(true);
     };
     prepare();
   }, []);
@@ -42,25 +43,22 @@ export default function App() {
     }
   }, [fontsLoaded]);
 
+  // don't render until fonts are loaded
   if (!fontsLoaded) return null;
 
   return (
     <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
-      <ProductProvider>
-        <CategorieProvider>
-          <CartProvider>
-          <NavigationContainer theme={navigationTheme}>
-            {showSplash ? (
-              <SplashScreenn />
-            ) : user ? (
-              <AppNavigator />
-            ) : (
-              <AuthNavigation />
-            )}
-          </NavigationContainer>
-        </CartProvider>
-        </CategorieProvider>
-      </ProductProvider>
+     
+            <NavigationContainer theme={navigationTheme}>
+              {showSplash ? (
+                <SplashScreenn />
+              ) : user ? (
+                <AppNavigator />
+              ) : (
+                <AuthNavigation />
+              )}
+            </NavigationContainer>
+       
     </View>
   );
 }
