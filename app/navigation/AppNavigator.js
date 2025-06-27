@@ -19,6 +19,7 @@ import Commissions from "../screens/Comissions";
 import Analytics from "../screens/Analytics";
 import Profile from "../screens/Profile";
 import BannerNavigator from "./BannerNavigator";
+import CommissionNavigator from "./CommissionNavigator";
 
 
 
@@ -78,7 +79,7 @@ const AppNavigator = () =>  {
       />
       <Tab.Screen
         name="commissions"
-              component={Commissions}
+              component={CommissionNavigator}
         options={{
           title: 'Commissions',
           tabBarIcon: ({ size, color }) => (

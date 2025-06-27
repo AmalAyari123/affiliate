@@ -100,7 +100,9 @@
     "getLink": "الحصول على الرابط",
     "analytics": "التحليلات",
     "bannerCode": "كود البانر",
-    "copyCode": "نسخ الكود"
+    "bannerLink": "رابط البانر",
+    "copyCode": "نسخ الكود",
+    "copyLink": "نسخ الرابط"
   },
   "referrals": {
     "title": "الإحالات",

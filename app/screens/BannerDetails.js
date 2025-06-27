@@ -1,44 +1,61 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, Modal } from 'react-native';
+import React, { useState, useContext } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, Modal, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, Share2, Copy, Eye, TrendingUp, ChartBar as BarChart3, Calendar, Download, Code, Link, X } from 'lucide-react-native';
+import { useRoute, useNavigation } from '@react-navigation/native';
+import { SwiperFlatList } from 'react-native-swiper-flatlist';
+import CampaignsContext from '../context/CampaignsContext';
+import he from 'he';
+
+// Utility to extract all image URLs from HTML content
+function extractImageUrls(html) {
+  if (!html) return [];
+  // Step 1: Decode HTML entities
+  const decodedContent = he.decode(html);
+  // Step 2: Extract all media paths using a tolerant regex
+  const regex = /\{\{\s*media\s+url\s*=\s*"([^"]+)"\s*\}\}/gi;
+  let matches, urls = [];
+  while ((matches = regex.exec(decodedContent))) {
+    const relativePath = matches[1];
+    // Step 3: Build the full URLs using the base media URL
+    const fullUrl = 'http://192.168.1.38/media/' + relativePath;
+    urls.push(fullUrl);
+  }
+  return urls;
+}
+
+const { width } = Dimensions.get('window');
+const IMAGE_BASE_URL = 'http://192.168.1.38';
+
+function prefixImageUrl(url) {
+  if (!url) return '';
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  return IMAGE_BASE_URL + url;
+}
 
 const BannerDetails = () => {
   const [showCodeModal, setShowCodeModal] = useState(false);
   const [selectedCodeType, setSelectedCodeType] = useState('html');
+  const route = useRoute();
+  const navigation = useNavigation();
+  const banner = route.params?.banner;
+  const { campaigns } = useContext(CampaignsContext);
 
-  const banner = {
-    id: '1',
-    name: 'Summer Sale Hero Banner',
-    campaign: 'Summer Sale 2024',
-    image: 'https://images.pexels.com/photos/1263986/pexels-photo-1263986.jpeg?auto=compress&cs=tinysrgb&w=800',
-    size: '728x90',
-    type: 'Leaderboard',
-    impressions: 12450,
-    clicks: 678,
-    ctr: '5.4%',
-    conversions: 34,
-    earnings: '$245.50',
-    status: 'active',
-    createdDate: '2024-06-01',
-    htmlCode: '<a href="https://wamia.com/summer-sale?ref=WAMIA123" target="_blank"><img src="https://images.pexels.com/photos/1263986/pexels-photo-1263986.jpeg?auto=compress&cs=tinysrgb&w=728&h=90" alt="Summer Sale - Get 25% Off" style="border:0;" /></a>',
-    directLink: 'https://wamia.com/summer-sale?ref=WAMIA123',
-    performanceData: [
-      { date: '2024-06-01', impressions: 450, clicks: 24, conversions: 2 },
-      { date: '2024-06-02', impressions: 520, clicks: 28, conversions: 3 },
-      { date: '2024-06-03', impressions: 380, clicks: 19, conversions: 1 },
-      { date: '2024-06-04', impressions: 610, clicks: 35, conversions: 4 },
-      { date: '2024-06-05', impressions: 490, clicks: 26, conversions: 2 },
-      { date: '2024-06-06', impressions: 720, clicks: 42, conversions: 5 },
-      { date: '2024-06-07', impressions: 580, clicks: 31, conversions: 3 }
-    ]
-  };
+  if (!banner) {
+    return (
+      <View style={styles.centered}>
+        <Text>Banner not found.</Text>
+      </View>
+    );
+  }
+
+  const campaign = campaigns.find(c => c.campaign_id === banner.campaign_id);
+  const images = extractImageUrls(banner.content).map(prefixImageUrl);
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'active': return '#10B981';
-      case 'paused': return '#F59E0B';
-      case 'expired': return '#EF4444';
+      case 1: return '#10B981';
+      case 0: return '#EF4444';
       default: return '#64748B';
     }
   };
@@ -64,13 +81,13 @@ const BannerDetails = () => {
   const getCodeContent = () => {
     switch (selectedCodeType) {
       case 'html':
-        return banner.htmlCode;
+        return banner.content;
       case 'link':
-        return banner.directLink;
+        return banner.link;
       case 'markdown':
-        return `[![${banner.name}](${banner.image})](${banner.directLink})`;
+        return `[![${banner.title}](${images[0]})](${banner.link})`;
       default:
-        return banner.htmlCode;
+        return banner.content;
     }
   };
 
@@ -79,7 +96,7 @@ const BannerDetails = () => {
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <ArrowLeft size={24} color="#0F172A" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Banner Details</Text>
@@ -88,8 +105,48 @@ const BannerDetails = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Content Sections (Preview, Info, Stats, Chart, Code Options, Actions, Modal) */}
-        {/* ...the rest of your JSX structure remains unchanged... */}
+        {/* Swiper for Images */}
+        <SwiperFlatList
+          data={images}
+          showPagination
+          paginationStyleItem={{ width: 8, height: 8, marginHorizontal: 4 }}
+          keyExtractor={(item, index) => index.toString()}
+          renderItem={({ item }) => (
+            <View style={styles.imageContainer}>
+              <Image
+                style={styles.mainImage}
+                source={{ uri: item }}
+                resizeMode="contain"
+              />
+            </View>
+          )}
+        />
+
+        {/* Banner Info */}
+        <View style={styles.detailsSection}>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Title</Text>
+            <Text style={styles.detailValue}>{banner.title}</Text>
+          </View>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Campaign</Text>
+            <Text style={styles.detailValue}>{campaign ? campaign.name : banner.campaign_id}</Text>
+          </View>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Status</Text>
+            <Text style={[styles.detailValue, { color: getStatusColor(banner.status) }]}>
+              {banner.status === 1 ? 'Active' : 'Inactive'}
+            </Text>
+          </View>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Created At</Text>
+            <Text style={styles.detailValue}>{banner.created_at}</Text>
+          </View>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailLabel}>Updated At</Text>
+            <Text style={styles.detailValue}>{banner.updated_at}</Text>
+          </View>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -114,6 +171,40 @@ const styles = StyleSheet.create({
   shareButton: {
     backgroundColor: '#3B82F6', borderRadius: 20, width: 40, height: 40,
     justifyContent: 'center', alignItems: 'center'
+  },
+  imageContainer: {
+    width,
+    height: width,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  mainImage: {
+    width: '100%',
+    height: '100%',
+  },
+  detailsSection: {
+    paddingHorizontal: 16,
+    paddingBottom: 30,
+  },
+  detailRow: {
+    marginBottom: 14,
+  },
+  detailLabel: {
+    fontSize: 16,
+    color: '#111',
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  detailValue: {
+    color: '#666',
+    fontSize: 14,
+    fontWeight: '500',
+    lineHeight: 20,
+  },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

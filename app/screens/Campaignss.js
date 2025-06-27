@@ -1,5 +1,4 @@
-// app/screens/Campaigns.js
-import React, { useState } from 'react';
+import React, { useContext } from 'react';
 import {
   View,
   Text,
@@ -14,89 +13,48 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   Target,
-  Calendar,
-  Users,
   DollarSign,
   TrendingUp,
   Eye,
   Copy,
   Share2,
-  Gift,
-  Zap,
   Clock,
   CircleCheck as CheckCircle,
   CircleAlert as AlertCircle,
   ChevronRight,
 } from 'lucide-react-native';
-import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '../hooks/useLanguage';
 import AppHeader from '../components/AppHeader';
 import { useNavigation } from '@react-navigation/native';
+import CampaignsContext from '../context/CampaignsContext';
+import * as Clipboard from 'expo-clipboard'; // Correct import for Expo Clipboard API
+
+const IMAGE_BASE_URL = 'http://192.168.1.38';
 
 const Campaignss = () => {
   const { t } = useTranslation();
   const { isRTL } = useLanguage();
-    const navigation = useNavigation();
-  const [selectedCampaign, setSelectedCampaign] = useState(null);
+  const navigation = useNavigation();
+  const { campaigns, loading, error } = useContext(CampaignsContext);
 
-  const campaignStats = [
-    { title: t('campaigns.activeCampaigns'), value: '8', icon: Target, color: '#FF6B35' },
-    { title: t('campaigns.totalClicks'),    value: '2,456', icon: Eye,      color: '#1E40AF' },
-    { title: t('campaigns.conversions'),    value: '89',    icon: TrendingUp, color: '#7C3AED' },
-    { title: t('campaigns.commissionRate'), value: '15%',   icon: DollarSign, color: '#059669' },
-  ];
+  // Helper for status color and text
+  const getStatusColor = status => status === 1 ? '#059669' : '#EF4444';
+  const getStatusText = status => status === 1 ? 'Active' : "Expired";
+  const getStatusIcon = status => status === 1 ? CheckCircle : AlertCircle;
 
-  const activeCampaigns = [
-    {
-      id: '1',
-      name: t('campaigns.summerSale'),
-      description: t('campaigns.summerSaleDesc'),
-      image: 'https://images.pexels.com/photos/1263986/pexels-photo-1263986.jpeg?auto=compress&cs=tinysrgb&w=800',
-      commission: '20%',
-      discount:   '15%',
-      startDate:  '2024-06-01',
-      endDate:    '2024-08-31',
-      status:     'active',
-      clicks:     456,
-      conversions:23,
-      earnings:   '$345.50',
-      tier:       'Gold',
-      referralLink:'https://customer.wamia.tn/summer-sale?ref=WAMIA123',
-    },
-    // ...other campaigns
-  ];
-
-  const getStatusColor = status => {
-    if (status === 'active')   return '#059669';
-    if (status === 'upcoming') return '#F59E0B';
-    if (status === 'expired')  return '#EF4444';
-    return '#64748B';
-  };
-
-  const getStatusIcon = status => {
-    if (status === 'active')   return CheckCircle;
-    if (status === 'upcoming') return Clock;
-    if (status === 'expired')  return AlertCircle;
-    return Target;
-  };
-
-  const getTierColor = tier => {
-    if (tier === 'Bronze')   return '#CD7F32';
-    if (tier === 'Silver')   return '#C0C0C0';
-    if (tier === 'Gold')     return '#FFD700';
-    if (tier === 'Platinum') return '#E5E4E2';
-    return '#64748B';
-  };
-
-  const copyReferralLink = link => {
-    Alert.alert(t('common.copied'), 'Referral link copied to clipboard');
+  // Copy referral link using Expo Clipboard
+  const copyReferralLink = (link) => {
+    Clipboard.setString(link);  // Use Clipboard API to set the referral link in the clipboard
+    Alert.alert(t('common.copied'), t('campaigns.copiedLink'));  // Show an alert when the link is copied
   };
 
   const shareReferralLink = campaign => {
     Alert.alert('Share Campaign', `Sharing ${campaign.name} campaign link`);
   };
 
+  // Featured campaign: first in the list
+  const featuredCampaign = campaigns && campaigns.length > 0 ? campaigns[0] : null;
 
   return (
     <SafeAreaView style={[styles.container, isRTL && styles.rtlContainer]} edges={['top']}>
@@ -106,90 +64,83 @@ const Campaignss = () => {
         showLogo
         showActions
       />
-
       <ScrollView 
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Campaign Stats */}
-        <View style={[styles.statsContainer, isRTL && styles.rtlStatsContainer]}>
-          {campaignStats.map((stat, i) => (
-            <View key={i} style={styles.statCard}>
-              <View style={[styles.statIcon, { backgroundColor: stat.color + '15' }]}>
-                <stat.icon size={20} color={stat.color} />
-              </View>
-              <Text style={[styles.statValue, isRTL && styles.rtlText]}>{stat.value}</Text>
-              <Text style={[styles.statTitle, isRTL && styles.rtlText]}>{stat.title}</Text>
-            </View>
-          ))}
-        </View>
-
         {/* Featured Campaign */}
-        <Text style={[styles.sectionTitle, isRTL && styles.rtlText]}>
-          {t('campaigns.featuredCampaign')}
-        </Text>
-        <View style={styles.featuredCampaign}>
-          <ImageBackground
-            source={{ uri: activeCampaigns[0].image }}
-            style={styles.featuredImage}
-            imageStyle={styles.featuredImageStyle}
-          >
-            <LinearGradient
-              colors={['rgba(255,107,53,0.7)','rgba(30,64,175,0.7)']}
-              style={styles.featuredOverlay}
-            >
-              <View style={styles.featuredContent}>
-                <View style={[styles.featuredHeader, isRTL && styles.rtlFeaturedHeader]}>
-                  <Text style={[styles.featuredTitle, isRTL && styles.rtlText]}>
-                    {activeCampaigns[0].name}
-                  </Text>
-                  <View style={[styles.tierBadge, { backgroundColor: getTierColor(activeCampaigns[0].tier) }]}>
-                    <Text style={styles.tierText}>{activeCampaigns[0].tier}</Text>
-                  </View>
-                </View>
-                <Text style={[styles.featuredDescription, isRTL && styles.rtlText]}>
-                  {activeCampaigns[0].description}
-                </Text>
-                <View style={[styles.featuredStats, isRTL && styles.rtlFeaturedStats]}>
-                  <View style={styles.featuredStat}>
-                    <Text style={[styles.featuredStatValue, isRTL && styles.rtlText]}>
-                      {activeCampaigns[0].commission}
+        {featuredCampaign && (
+          <>
+            <Text style={[styles.sectionTitle, isRTL && styles.rtlText]}>
+              {t('campaigns.featuredCampaign')}
+            </Text>
+            <View style={styles.featuredCampaign}>
+              <ImageBackground
+                source={{ uri: featuredCampaign.images_url?.[0]?.replace('https://magento.test', IMAGE_BASE_URL) }}
+                style={styles.featuredImage}
+                imageStyle={styles.featuredImageStyle}
+              >
+                <LinearGradient
+                  colors={['rgba(255,107,53,0.7)','rgba(30,64,175,0.7)']}
+                  style={styles.featuredOverlay}
+                >
+                  <View style={styles.featuredContent}>
+                    <View style={[styles.featuredHeader, isRTL && styles.rtlFeaturedHeader]}>
+                      <Text style={[styles.featuredTitle, isRTL && styles.rtlText]}>
+                        {featuredCampaign.name}
+                      </Text>
+                    </View>
+                    <Text style={[styles.featuredDescription, isRTL && styles.rtlText]}>
+                      {featuredCampaign.description}
                     </Text>
-                    <Text style={[styles.featuredStatLabel, isRTL && styles.rtlText]}>
-                      {t('campaigns.commission')}
-                    </Text>
+                    <View style={[styles.featuredStats, isRTL && styles.rtlFeaturedStats]}>
+                      <View style={styles.featuredStat}>
+                        <Text style={[styles.featuredStatValue, isRTL && styles.rtlText]}>
+                          {featuredCampaign.commission}
+                        </Text>
+                        <Text style={[styles.featuredStatLabel, isRTL && styles.rtlText]}>
+                          {t('campaigns.commission')}
+                        </Text>
+                      </View>
+                      <View style={styles.featuredStat}>
+                        <Text style={[styles.featuredStatValue, isRTL && styles.rtlText]}>
+                          {featuredCampaign.discount_amount}%
+                        </Text>
+                        <Text style={[styles.featuredStatLabel, isRTL && styles.rtlText]}>
+                          {t('campaigns.discount')}
+                        </Text>
+                      </View>
+                    </View>
                   </View>
-                  {/* ... conversions & earnings */}
-                </View>
-              </View>
-            </LinearGradient>
-          </ImageBackground>
-        </View>
-
+                </LinearGradient>
+              </ImageBackground>
+            </View>
+          </>
+        )}
         {/* All Campaigns */}
         <Text style={[styles.sectionTitle, isRTL && styles.rtlText]}>
           {t('campaigns.allCampaigns')}
         </Text>
         <View style={styles.campaignsList}>
-          {activeCampaigns.map((campaign, idx) => {
+          {campaigns.map((campaign, idx) => {
             const StatusIcon = getStatusIcon(campaign.status);
             return (
               <TouchableOpacity
-                key={idx}
+                key={campaign.campaign_id}
                 style={styles.campaignCard}
-                        onPress={() => navigation.navigate('CampaignDetails')}
+                onPress={() => navigation.navigate('CampaignDetails', { campaign })}
               >
-                <Image source={{ uri: campaign.image }} style={styles.campaignImage} />
+                <Image source={{ uri: campaign.images_url?.[0]?.replace('https://magento.test', IMAGE_BASE_URL) }} style={styles.campaignImage} />
                 <View style={styles.campaignContent}>
                   <View style={[styles.campaignHeader, isRTL && styles.rtlCampaignHeader]}>
                     <Text style={[styles.campaignName, isRTL && styles.rtlText]}>
                       {campaign.name}
                     </Text>
-                    <View style={[styles.statusBadge, { backgroundColor: getStatusColor(campaign.status) + '15' }]}>
+                    <View style={[styles.statusBadge, { backgroundColor: getStatusColor(campaign.status) + '15' }]}> 
                       <StatusIcon size={12} color={getStatusColor(campaign.status)} />
                       <Text style={[styles.statusText, { color: getStatusColor(campaign.status) }, isRTL && styles.rtlText]}>
-                        {campaign.status}
+                        {getStatusText(campaign.status)}
                       </Text>
                     </View>
                   </View>
@@ -197,7 +148,7 @@ const Campaignss = () => {
                     {campaign.description}
                   </Text>
                   <View style={[styles.campaignActions, isRTL && styles.rtlCampaignActions]}>
-                    <TouchableOpacity style={styles.actionButton} onPress={() => copyReferralLink(campaign.referralLink)}>
+                    <TouchableOpacity style={styles.actionButton} onPress={() => copyReferralLink(campaign.referral_link)}>
                       <Copy size={16} color="#FF6B35" />
                       <Text style={[styles.actionButtonText, isRTL && styles.rtlText]}>
                         {t('campaigns.copyLink')}
@@ -209,7 +160,7 @@ const Campaignss = () => {
                         {t('common.share')}
                       </Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.detailsButton}>     
+                    <TouchableOpacity style={styles.detailsButton} onPress={() => navigation.navigate('CampaignDetails', { campaign })}>
                       <ChevronRight size={16} color="#64748B" />
                     </TouchableOpacity>
                   </View>
@@ -218,7 +169,6 @@ const Campaignss = () => {
             );
           })}
         </View>
-
       </ScrollView>
     </SafeAreaView>
   );

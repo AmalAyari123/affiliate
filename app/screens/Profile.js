@@ -1,23 +1,74 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Image } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Users, Award, TrendingUp, Mail, Phone, MapPin, Globe } from 'lucide-react-native';
+import { Users, Award, TrendingUp, Mail, Phone, MapPin, Globe, LogOut } from 'lucide-react-native';
+import { useAuth } from '../context/AuthContext';
+import { getCustomerProfile, getAffiliateAccount } from '../api/authApi';
 
 const Profile = () => {
-  const profileData = {
-    name: 'Wamia Ambassador',
-    email: 'ambassador@wamia.com',
-    phone: '+1 (555) 123-4567',
-    location: 'New York, USA',
-    website: 'www.wamia-affiliate.com',
-  };
+  const { signOut } = useAuth();
+  
+  const [profileData, setProfileData] = useState({
+    firstname: '',
+    lastname: '',
+    email: '',
+  });
+  const [totalCommission, setTotalCommission] = useState(0);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const profileRes = await getCustomerProfile();
+      if (profileRes.success) {
+        setProfileData({
+          firstname: profileRes.data.firstname,
+          lastname: profileRes.data.lastname,
+          email: profileRes.data.email,
+        });
+      }
+      const accountRes = await getAffiliateAccount();
+      if (accountRes.success) {
+        setTotalCommission(accountRes.data.total_commission);
+        console.log("Total commission:", accountRes.data.total_commission);
+
+      }
+    };
+    fetchData();
+  }, []);
+
+  const displayName = `${profileData.firstname} ${profileData.lastname}`.trim() || 'Wamia Ambassador';
+  const displayEmail = profileData.email || 'ambassador@wamia.com';
 
   const profileStats = [
     { title: 'Referrals', value: '156', icon: Users, color: '#3B82F6' },
-    { title: 'Total Earnings', value: '$2,450', icon: TrendingUp, color: '#10B981' },
+    { title: 'Total Earnings', value: `$${totalCommission}`, icon: TrendingUp, color: '#10B981' },
     { title: 'Rank', value: 'Gold', icon: Award, color: '#F59E0B' },
   ];
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Déconnexion',
+      'Êtes-vous sûr de vouloir vous déconnecter ?',
+      [
+        {
+          text: 'Annuler',
+          style: 'cancel',
+        },
+        {
+          text: 'Déconnexion',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await signOut();
+            } catch (error) {
+              console.error('Logout error:', error);
+              Alert.alert('Erreur', 'Une erreur est survenue lors de la déconnexion');
+            }
+          },
+        },
+      ]
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -36,8 +87,8 @@ const Profile = () => {
                 style={styles.avatar}
               />
               <View style={styles.profileInfo}>
-                <Text style={styles.profileName}>{profileData.name}</Text>
-                <Text style={styles.profileEmail}>{profileData.email}</Text>
+                <Text style={styles.profileName}>{displayName}</Text>
+                <Text style={styles.profileEmail}>{displayEmail}</Text>
                 <View style={styles.profileBadge}>
                   <Award size={16} color="#F59E0B" />
                   <Text style={styles.badgeText}>Gold Member</Text>
@@ -46,7 +97,7 @@ const Profile = () => {
             </View>
             <View style={styles.balanceContainer}>
               <Text style={styles.balanceLabel}>Total Earnings</Text>
-              <Text style={styles.balanceAmount}>$2,450.00</Text>
+              <Text style={styles.balanceAmount}>${totalCommission}</Text>
             </View>
           </LinearGradient>
         </View>
@@ -72,7 +123,7 @@ const Profile = () => {
             <View style={styles.infoIcon}><Mail size={20} color="#64748B" /></View>
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>Email</Text>
-              <Text style={styles.infoValue}>{profileData.email}</Text>
+              <Text style={styles.infoValue}>{displayEmail}</Text>
             </View>
           </View>
 
@@ -99,6 +150,14 @@ const Profile = () => {
               <Text style={styles.infoValue}>{profileData.website}</Text>
             </View>
           </View>
+        </View>
+
+        {/* Logout Button */}
+        <View style={styles.logoutSection}>
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+            <LogOut size={20} color="#EF4444" />
+            <Text style={styles.logoutText}>Se déconnecter</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -132,6 +191,23 @@ const styles = StyleSheet.create({
   infoContent: { flex: 1 },
   infoLabel: { fontSize: 12, color: '#64748B', marginBottom: 2 },
   infoValue: { fontSize: 16, color: '#0F172A' },
+  logoutSection: { paddingHorizontal: 20, marginBottom: 32 },
+  logoutButton: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF', 
+    borderRadius: 12, 
+    padding: 16, 
+    borderWidth: 1,
+    borderColor: '#EF4444',
+  },
+  logoutText: { 
+    fontSize: 16, 
+    fontWeight: '600', 
+    color: '#EF4444', 
+    marginLeft: 8 
+  },
 });
 
 export default Profile;

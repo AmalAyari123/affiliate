@@ -1,5 +1,5 @@
 // app/screens/Commissions.js
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,14 @@ import {
   Alert,
   Modal,
   SafeAreaView,
+  Dimensions,
+  Image,
+  ImageBackground,
+  KeyboardAvoidingView,
+  Platform,
+  Animated,
+  Easing,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -31,21 +39,83 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '../hooks/useLanguage';
 import AppHeader from '../components/AppHeader';
+import { useNavigation } from '@react-navigation/native';
+import BottomSheet from '@devvie/bottom-sheet';
+import { withdrawFunds } from '../api/withdrawApi';
+import { getAffiliateAccount } from '../api/authApi';
+
 
 export default function Commissions() {
+    const navigation = useNavigation();
+  
   const { t } = useTranslation();
   const { isRTL } = useLanguage();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
-  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState('');
+  const sheetRef = useRef(null);
+  const [numberCard, setNumberCard] = useState('');
+  const [userName, setUserName] = useState('');
+  const [expirationDate, setExpirationDate] = useState('');
+  const [isCVCFocused, setIsCVCFocused] = useState(false);
+  const flipAnimation = useRef(new Animated.Value(0)).current;
+  const flipInterpolate = flipAnimation.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '180deg'],
+  });
+
+  // Withdraw form state
+  const [amount, setAmount] = useState('');
+  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const [account, setAccount] = useState({ 
+    balance: 0, 
+    holding_balance: 0, 
+    total_commission: 0,
+    created_at: null 
+  });
+  const [thisMonthCommission, setThisMonthCommission] = useState(0);
+
+  useEffect(() => {
+    const fetchAccount = async () => {
+      const res = await getAffiliateAccount();
+      if (res.success) {
+        setAccount({
+          balance: res.data.balance || 0,
+          holding_balance: res.data.holding_balance || 0,
+          total_commission: res.data.total_commission || 0,
+          created_at: res.data.created_at || null,
+        });
+        
+        // Calculate this month's commission based on created_at
+        if (res.data.created_at) {
+          const createdDate = new Date(res.data.created_at);
+          const currentDate = new Date();
+          const currentMonth = currentDate.getMonth();
+          const currentYear = currentDate.getFullYear();
+          
+          // If account was created this month, use total_commission
+          // Otherwise, you might want to fetch monthly data from API
+          if (createdDate.getMonth() === currentMonth && createdDate.getFullYear() === currentYear) {
+            setThisMonthCommission(res.data.total_commission || 0);
+          } else {
+            // For now, we'll use a portion of total_commission as this month's
+            // In a real implementation, you'd fetch monthly commission data
+            setThisMonthCommission(Math.round((res.data.total_commission || 0) * 0.3));
+          }
+        }
+      }
+    };
+    fetchAccount();
+  }, []);
 
   const commissionStats = [
-    { title: t('commissions.totalEarned'), value: '$2,450.00', icon: DollarSign, color: '#10B981' },
-    { title: t('commissions.availableBalance'), value: '$1,234.50', icon: Wallet, color: '#3B82F6' },
-    { title: t('common.pending'), value: '$456.00', icon: Clock, color: '#F59E0B' },
-    { title: t('commissions.thisMonth'), value: '$678.25', icon: TrendingUp, color: '#8B5CF6' },
+    { title: t('commissions.totalEarned'), value: `$${account.total_commission}`, icon: DollarSign, color: '#10B981' },
+    { title: t('commissions.availableBalance'), value: `$${account.balance}`, icon: Wallet, color: '#3B82F6' },
+    { title: t('common.pending'), value: `$${account.holding_balance}`, icon: Clock, color: '#F59E0B' },
+    { title: t('commissions.thisMonth'), value: `$${thisMonthCommission}`, icon: TrendingUp, color: '#8B5CF6' },
   ];
 
   const commissionHistory = [
@@ -55,39 +125,6 @@ export default function Commissions() {
     { id: 4, type: 'commission',  description: 'Commission from Mike Chen purchase',    amount: '+$125.00', date: '2024-01-12', status: 'completed', orderId: '#ORD-004' },
     { id: 5, type: 'refund',      description: 'Refund adjustment - Emma Davis',         amount: '-$32.50',  date: '2024-01-11', status: 'completed', orderId: '#REF-005' },
   ];
-
-  const paymentMethods = [
-    { id: 'paypal',    name: t('commissions.paypal'),       icon: CreditCard, color: '#0070BA' },
-    { id: 'bank',      name: t('commissions.bankTransfer'), icon: Banknote,   color: '#10B981' },
-    { id: 'skrill',    name: t('commissions.skrill'),       icon: Wallet,     color: '#8B5CF6' },
-  ];
-
-  const handleWithdraw = () => {
-    const amt = parseFloat(withdrawAmount);
-    if (!amt || amt <= 0) {
-      Alert.alert(t('common.error'), t('commissions.enterValidAmount'));
-      return;
-    }
-    if (amt > 1234.50) {
-      Alert.alert(t('common.error'), t('commissions.insufficientBalance'));
-      return;
-    }
-    Alert.alert(
-      t('commissions.withdrawalRequest'),
-      t('commissions.withdrawalConfirm', { amount: withdrawAmount }),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('common.confirm'),
-          onPress: () => {
-            setShowWithdrawModal(false);
-            setWithdrawAmount('');
-            Alert.alert(t('common.success'), t('commissions.withdrawalSuccess'));
-          }
-        }
-      ]
-    );
-  };
 
   function getTransactionIcon(type) {
     switch (type) {
@@ -123,6 +160,97 @@ export default function Commissions() {
     );
   });
 
+  const handleExpirationDateChange = (text) => {
+    const cleanedText = text.replace(/[^\d]/g, '');
+    if (cleanedText.length <= 2) {
+      setExpirationDate(cleanedText);
+    } else if (cleanedText.length > 2 && cleanedText.length <= 4) {
+      setExpirationDate(cleanedText.slice(0, 2) + '/' + cleanedText.slice(2));
+    } else {
+      setExpirationDate(cleanedText.slice(0, 2) + '/' + cleanedText.slice(2, 4));
+    }
+  };
+
+  const formatCardNumber = () => {
+    let formattedNumber = '';
+    const ribLength = 20;
+    for (let i = 0; i < ribLength; i++) {
+      if (i < numberCard.length) {
+        formattedNumber += numberCard[i];
+      } else {
+        formattedNumber += '•';
+      }
+      if ((i + 1) % 4 === 0 && i !== ribLength - 1) {
+        formattedNumber += ' ';
+      }
+    }
+    return formattedNumber;
+  };
+  
+
+  const maskCvc = () => cvc.replace(/./g, '*');
+
+  const handleCVCFocus = () => {
+    setIsCVCFocused(true);
+    Animated.timing(flipAnimation, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+      easing: Easing.linear,
+    }).start();
+  };
+
+  const handleCVCBlur = () => {
+    setIsCVCFocused(false);
+    Animated.timing(flipAnimation, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+      easing: Easing.linear,
+    }).start();
+  };
+
+  // Helper for RIB input (20 digits max)
+  const handleRibChange = (text) => {
+    const cleaned = text.replace(/[^\d]/g, '');
+    setNumberCard(cleaned.slice(0, 20));
+  };
+
+  // API call for withdraw
+  const handleSendRequest = async () => {
+    if (!userName || !numberCard || !amount) {
+      Alert.alert('Error', 'Please fill all required fields.');
+      return;
+    }
+    
+    // Validate amount against available balance
+    const requestedAmount = parseFloat(amount);
+    if (requestedAmount > account.balance) {
+      Alert.alert('Error', 'The amount you requested is not enough to be withdrawn');
+      return;
+    }
+    
+    setLoading(true);
+    const result = await withdrawFunds({ accountHolder: userName, amount, rib: numberCard, message });
+    setLoading(false);
+    if (result.success) {
+      if (sheetRef.current && typeof sheetRef.current.close === 'function') {
+        sheetRef.current.close();
+      }
+      setUserName(''); setNumberCard(''); setAmount(''); setMessage('');
+      Alert.alert('Success', 'Withdrawal request sent successfully.');
+    } else {
+      Alert.alert('Error', result.error || 'Failed to send request.');
+    }
+  };
+
+  // Update the Quick Actions section to use the modal
+  const handleQuickActionWithdraw = () => {
+    if (sheetRef.current && typeof sheetRef.current.open === 'function') {
+      sheetRef.current.open();
+    }
+  };
+
   return (
     <SafeAreaView style={[styles.container, isRTL && styles.rtlContainer]}>
       <AppHeader
@@ -137,19 +265,6 @@ export default function Commissions() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Withdraw button */}
-        <View style={[styles.headerActions, isRTL && styles.rtlHeaderActions]}>
-          <TouchableOpacity
-            style={styles.withdrawButton}
-            onPress={() => setShowWithdrawModal(true)}
-          >
-            <ArrowUpCircle size={20} color="#FFF" />
-            <Text style={[styles.withdrawButtonText, isRTL && styles.rtlText]}>
-              {t('commissions.withdrawFunds')}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
         {/* Balance card */}
         <View style={styles.balanceCard}>
           <LinearGradient
@@ -164,14 +279,14 @@ export default function Commissions() {
               </Text>
               <PiggyBank size={24} color="#FFF" />
             </View>
-            <Text style={[styles.balanceAmount, isRTL && styles.rtlText]}>$1,234.50</Text>
+            <Text style={[styles.balanceAmount, isRTL && styles.rtlText]}>${account.balance}</Text>
             <View style={[styles.balanceFooter, isRTL && styles.rtlBalanceFooter]}>
               <View style={styles.balanceInfo}>
                 <Text style={[styles.balanceInfoLabel, isRTL && styles.rtlText]}>
                   {t('common.pending')}
                 </Text>
                 <Text style={[styles.balanceInfoValue, isRTL && styles.rtlText]}>
-                  $456.00
+                  ${account.holding_balance}
                 </Text>
               </View>
               <View style={styles.balanceInfo}>
@@ -179,7 +294,7 @@ export default function Commissions() {
                   {t('commissions.thisMonth')}
                 </Text>
                 <Text style={[styles.balanceInfoValue, isRTL && styles.rtlText]}>
-                  $678.25
+                  ${thisMonthCommission}
                 </Text>
               </View>
             </View>
@@ -210,7 +325,7 @@ export default function Commissions() {
         <View style={[styles.quickActions, isRTL && styles.rtlQuickActions]}>
           <TouchableOpacity
             style={styles.actionCard}
-            onPress={() => setShowWithdrawModal(true)}
+            onPress={handleQuickActionWithdraw}
           >
             <View style={[styles.actionIcon, { backgroundColor: '#3B82F615' }]}>
               <ArrowUpCircle size={24} color="#3B82F6" />
@@ -331,56 +446,147 @@ export default function Commissions() {
         </View>
       </ScrollView>
 
-      {/* Withdrawal Modal */}
-      <Modal
-        visible={showWithdrawModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowWithdrawModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, isRTL && styles.rtlModal]}>
-            <View style={[styles.modalHeader, isRTL && styles.rtlModalHeader]}>
-              <Text style={[styles.modalTitle, isRTL && styles.rtlText]}>
-                {t('commissions.withdrawFunds')}
-              </Text>
-              <TouchableOpacity onPress={() => setShowWithdrawModal(false)}>
-                <X size={24} color="#64748B" />
-              </TouchableOpacity>
-            </View>
-            <View style={styles.modalBody}>
-              <Text style={[styles.modalLabel, isRTL && styles.rtlText]}>
-                {t('commissions.withdrawalAmount')}
-              </Text>
-              <TextInput
-                style={[styles.input, isRTL && styles.rtlInput]}
-                placeholder="0.00"
-                value={withdrawAmount}
-                onChangeText={setWithdrawAmount}
-                keyboardType="numeric"
-              />
-            </View>
-            <View style={[styles.modalFooter, isRTL && styles.rtlModalFooter]}>
-              <TouchableOpacity
-                style={styles.cancelButton}
-                onPress={() => setShowWithdrawModal(false)}
+      <BottomSheet ref={sheetRef} style={{alignItems:'center'}} disableDragHandlePanning={true} height={600}>
+        <KeyboardAvoidingView
+          style={{ flex: 1, width: '100%' }}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+          enabled={true}
+        >
+          <View style={{width:'100%', alignItems:'center', flex: 1}}>
+            {/* Card visualization */}
+            <View style={{alignItems:'center', width:'100%', marginBottom:8}}>
+              <ImageBackground
+                source={require('../../assets/card-front.png')}
+                style={{
+                  height:120,
+                  width:Dimensions.get('window').width -60,
+                  alignItems:'flex-start',
+                  justifyContent:'center',
+                  marginBottom:10,
+                  borderRadius:20,
+                  overflow:'hidden',
+                  padding:16,
+                  position:'relative',
+                }}
               >
-                <Text style={[styles.cancelButtonText, isRTL && styles.rtlText]}>
-                  {t('common.cancel')}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.confirmButton}
-                onPress={handleWithdraw}
-              >
-                <Text style={[styles.confirmButtonText, isRTL && styles.rtlText]}>
-                  {t('commissions.confirmWithdrawal')}
-                </Text>
-              </TouchableOpacity>
+                {/* Chip on the left */}
+                <Image source={require('../../assets/chip.png')} style={{
+                  height:28, width:42, position:'absolute', top:18, left:16
+                }}/>
+                {/* Visa logo on the right */}
+                <Image source={require('../../assets/visa.png')} style={{
+                  height:28, width:50, position:'absolute', top:10, right:16
+                }}/>
+                {/* Card holder */}
+                <Text style={{color:'#fff', fontSize:16, fontFamily:'EbrimaBold', marginBottom:6, textTransform:'uppercase', position:'absolute', bottom:16, left:16}}>{userName || 'XXXX XXXX'}</Text>
+                {/* Card number (RIB) */}
+                <Text style={{color:'#fff', fontSize:15, fontFamily:'Ebrima', letterSpacing:2, position:'absolute', top:60, left:16}}>{formatCardNumber()}</Text>
+              </ImageBackground>
             </View>
-          </View>
+            {/* Scrollable fields */}
+            <ScrollView 
+              showsVerticalScrollIndicator={false} 
+              style={{width:'100%'}} 
+              contentContainerStyle={{alignItems:'center', paddingBottom:80}}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="none"
+            >
+              <View style={{alignItems:'flex-start', width:'90%', marginBottom:8}}>
+                <Text numberOfLines={1} style={{
+                  color:'#7f7f7f', fontFamily:'EbrimaBold', fontSize:13, paddingLeft:2, marginBottom:2
+                }}>Account Holder</Text>
+                <TextInput
+                  style={{
+                    padding:6, width:'100%',
+                    borderBottomColor:'#7f7f7f',borderWidth:1,borderColor:'transparent', fontSize:14
+                  }}
+                  onChangeText={setUserName}
+                  value={userName}
+                  placeholder="xxxx xxxx"
+                  autoCapitalize="words"
+                  autoCorrect={false}
+                  returnKeyType="next"
+                  blurOnSubmit={false}
+                />
+              </View>
+              <View style={{alignItems:'flex-start', width:'90%', marginBottom:8}}>
+                <Text style={{
+                  color:'#7f7f7f', fontFamily:'EbrimaBold', fontSize:13, paddingLeft:2, marginBottom:2
+                }}>RIB</Text>
+                <TextInput
+                  style={{
+                    padding:6, width:'100%',
+                    borderBottomColor:'#7f7f7f',borderWidth:1,borderColor:'transparent', fontSize:14
+                  }}
+                  onChangeText={handleRibChange}
+                  value={numberCard}
+                  placeholder="•••• •••• •••• •••• ••••"
+                  keyboardType="number-pad"
+                  maxLength={20}
+                  returnKeyType="next"
+                  blurOnSubmit={false}
+                />
+              </View>
+              <View style={{alignItems:'flex-start', width:'90%', marginBottom:8}}>
+                <Text style={{
+                  color:'#7f7f7f', fontFamily:'EbrimaBold', fontSize:13, paddingLeft:2, marginBottom:2
+                }}>Amount</Text>
+                <TextInput
+                  style={{
+                    padding:6, width:'100%',
+                    borderBottomColor:'#7f7f7f',borderWidth:1,borderColor:'transparent', fontSize:14
+                  }}
+                  onChangeText={setAmount}
+                  value={amount}
+                  placeholder="Amount"
+                  keyboardType="numeric"
+                  returnKeyType="next"
+                  blurOnSubmit={false}
+                />
+              </View>
+              <View style={{alignItems:'flex-start', width:'90%', marginBottom:8}}>
+                <Text style={{
+                  color:'#7f7f7f', fontFamily:'EbrimaBold', fontSize:13, paddingLeft:2, marginBottom:2
+                }}>Message</Text>
+                <TextInput
+                  style={{
+                    padding:6, width:'100%',
+                    borderBottomColor:'#7f7f7f',borderWidth:1,borderColor:'transparent', fontSize:14, minHeight:40
+                  }}
+                  onChangeText={setMessage}
+                  value={message}
+                  placeholder="Message (optional)"
+                  multiline
+                  returnKeyType="done"
+                  blurOnSubmit={true}
+                />
+              </View>
+              <View style={{ width: '90%', alignItems: 'center', marginTop: 16 }}>
+          <TouchableOpacity
+            style={{
+              backgroundColor: '#0a6660',
+              width: '100%',
+              height: 44,
+              borderRadius: 30,
+              justifyContent: 'center',
+              alignItems: 'center',
+              flexDirection: 'row',
+            }}
+            onPress={handleSendRequest}
+            disabled={loading}
+          >
+            {loading && <ActivityIndicator color="#fff" style={{ marginRight: 8 }} />}
+            <Text style={{ color: '#FFFFFF', fontFamily: 'EbrimaBold', fontSize: 16, letterSpacing: 1 }}>Send</Text>
+          </TouchableOpacity>
         </View>
-      </Modal>
+
+            </ScrollView>
+            {/* Send button always visible at the bottom */}
+          
+          </View>
+        </KeyboardAvoidingView>
+      </BottomSheet>
     </SafeAreaView>
   );
 }
@@ -418,6 +624,7 @@ const styles = StyleSheet.create({
   },
   balanceCard: {
     marginHorizontal: 20,
+    marginTop: 20,
     marginBottom: 24,
     borderRadius: 16,
     overflow: 'hidden',
@@ -469,6 +676,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     paddingHorizontal: 20,
     marginBottom: 32,
+    marginTop: 20,
   },
   statCard: {
     width: '48%',

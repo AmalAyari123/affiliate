@@ -9,27 +9,119 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  Dimensions
+  Dimensions,
+  Alert,
+  ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { completeRegistration } from '../api/authApi';
+import { useAuth } from '../context/AuthContext';
+import ErrorMessage from '../components/ErrorMessage';
 
 const { width } = Dimensions.get('window');
 
-const AuthScreen = ({ navigation }) => {
+const AuthScreen = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState({});
+  const navigation = useNavigation();
+  const { signIn } = useAuth();
 
-  const handleRegister = () => {
-    // Handle registration logic here
-    console.log('Registration data:', { firstName, lastName, email, password });
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+  const validateForm = () => {
+    const newErrors = {};
+    if (!firstName.trim()) {
+      newErrors.firstName = 'Veuillez saisir votre prénom';
+    }
+    if (!lastName.trim()) {
+      newErrors.lastName = 'Veuillez saisir votre nom';
+    }
+    if (!email.trim()) {
+      newErrors.email = 'Veuillez saisir votre email';
+    } else if (!emailRegex.test(email.trim())) {
+      newErrors.email = 'Veuillez saisir un email valide';
+    }
+    if (!password.trim()) {
+      newErrors.password = 'Veuillez saisir votre mot de passe';
+    } else {
+      // Magento password validation rules
+      if (password.length < 8) {
+        newErrors.password = 'Le mot de passe doit contenir au moins 8 caractères';
+      } else if (!/(?=.*[a-z])/.test(password)) {
+        newErrors.password = 'Le mot de passe doit contenir au moins une lettre minuscule';
+      } else if (!/(?=.*[A-Z])/.test(password)) {
+        newErrors.password = 'Le mot de passe doit contenir au moins une lettre majuscule';
+      } else if (!/(?=.*\d)/.test(password)) {
+        newErrors.password = 'Le mot de passe doit contenir au moins un chiffre';
+      } else if (!/(?=.*[@$!%*?&])/.test(password)) {
+        newErrors.password = 'Le mot de passe doit contenir au moins un caractère spécial (@$!%*?&)';
+      }
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleRegister = async () => {
+    if (!validateForm()) return;
+
+    setIsLoading(true);
+    setErrors({}); // Clear previous errors
+    
+    try {
+      const result = await completeRegistration({
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        email: email.trim(),
+        password: password
+      });
+
+      if (result.success) {
+        // Get the token from the result (it should be stored by the API)
+        const token = await AsyncStorage.getItem('userToken');
+        if (token) {
+          await signIn(token);
+        }
+        
+        Alert.alert(
+          'Succès!', 
+          'Inscription réussie! Vous êtes maintenant inscrit en tant qu\'affilié.',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                // The user will be automatically redirected to the main app
+                // due to the AuthContext state change
+              }
+            }
+          ]
+        );
+      } else {
+        // Handle specific error cases
+        if (result.error && result.error.includes('Email already exists')) {
+          setErrors(prev => ({ ...prev, email: 'Cet email existe déjà. Veuillez utiliser un autre email.' }));
+        } else if (result.error && result.error.includes('password')) {
+          setErrors(prev => ({ ...prev, password: 'Le mot de passe ne respecte pas les critères de sécurité.' }));
+        } else {
+          Alert.alert('Erreur', result.error || 'Une erreur est survenue lors de l\'inscription');
+        }
+      }
+    } catch (error) {
+      Alert.alert('Erreur', 'Une erreur inattendue est survenue');
+      console.error('Registration error:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleLogin = () => {
-    // Handle login navigation
-    console.log('Navigate to login');
+    navigation.navigate("Login");
   };
 
   return (
@@ -41,17 +133,17 @@ const AuthScreen = ({ navigation }) => {
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
       >
-  <View style={styles.logoContainer}>
-  <View style={styles.logoRow}>
-    <Image
-      source={require('../../assets/logo_wamia_noir.png')}
-      style={styles.logo}
-      resizeMode="contain"
-    />
-    <Text style={styles.affliateText}>Affiliate</Text>
-  </View>
-  <Text style={styles.slogan}> إنت تروّج وإحنا نربحوك!</Text>
-</View>
+        <View style={styles.logoContainer}>
+          <View style={styles.logoRow}>
+            <Image
+              source={require('../../assets/logo_wamia_noir.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+            <Text style={styles.affliateText}>Affiliate</Text>
+          </View>
+          <Text style={styles.slogan}> إنت تروّج وإحنا نربحوك!</Text>
+        </View>
 
         <View style={styles.formContainer}>
           {/* Form */}
@@ -66,9 +158,11 @@ const AuthScreen = ({ navigation }) => {
                   placeholder="Votre prénom"
                   placeholderTextColor="#9CA3AF"
                   value={firstName}
-                  onChangeText={setFirstName}
+                  onChangeText={text => { setFirstName(text); setErrors(errors => ({ ...errors, firstName: undefined })); }}
+                  editable={!isLoading}
                 />
               </View>
+              <ErrorMessage error={errors.firstName} visible={!!errors.firstName} />
             </View>
 
             {/* Last Name */}
@@ -81,9 +175,11 @@ const AuthScreen = ({ navigation }) => {
                   placeholder="Votre nom"
                   placeholderTextColor="#9CA3AF"
                   value={lastName}
-                  onChangeText={setLastName}
+                  onChangeText={text => { setLastName(text); setErrors(errors => ({ ...errors, lastName: undefined })); }}
+                  editable={!isLoading}
                 />
               </View>
+              <ErrorMessage error={errors.lastName} visible={!!errors.lastName} />
             </View>
 
             {/* Email */}
@@ -96,11 +192,13 @@ const AuthScreen = ({ navigation }) => {
                   placeholder="Votre meilleur email"
                   placeholderTextColor="#9CA3AF"
                   value={email}
-                  onChangeText={setEmail}
+                  onChangeText={text => { setEmail(text); setErrors(errors => ({ ...errors, email: undefined })); }}
                   keyboardType="email-address"
                   autoCapitalize="none"
+                  editable={!isLoading}
                 />
               </View>
+              <ErrorMessage error={errors.email} visible={!!errors.email} />
             </View>
 
             {/* Password */}
@@ -113,12 +211,14 @@ const AuthScreen = ({ navigation }) => {
                   placeholder="Créez votre mot de passe"
                   placeholderTextColor="#9CA3AF"
                   value={password}
-                  onChangeText={setPassword}
+                  onChangeText={text => { setPassword(text); setErrors(errors => ({ ...errors, password: undefined })); }}
                   secureTextEntry={!showPassword}
+                  editable={!isLoading}
                 />
                 <TouchableOpacity
                   style={styles.eyeIcon}
                   onPress={() => setShowPassword(!showPassword)}
+                  disabled={isLoading}
                 >
                   <Ionicons 
                     name={showPassword ? "eye-outline" : "eye-off-outline"} 
@@ -127,21 +227,27 @@ const AuthScreen = ({ navigation }) => {
                   />
                 </TouchableOpacity>
               </View>
+              <ErrorMessage error={errors.password} visible={!!errors.password} />
             </View>
           </View>
 
           {/* Register Button */}
           <TouchableOpacity 
-            style={styles.registerButton}
+            style={[styles.registerButton, isLoading && styles.registerButtonDisabled]}
             onPress={handleRegister}
+            disabled={isLoading}
           >
-            <Text style={styles.registerButtonText}>S'inscrire</Text>
+            {isLoading ? (
+              <ActivityIndicator color="#FFFFFF" size="small" />
+            ) : (
+              <Text style={styles.registerButtonText}>S'inscrire</Text>
+            )}
           </TouchableOpacity>
 
           {/* Login Link */}
           <View style={styles.loginContainer}>
             <Text style={styles.loginText}>Vous avez déjà un compte ? </Text>
-            <TouchableOpacity onPress={handleLogin}>
+            <TouchableOpacity onPress={handleLogin} disabled={isLoading}>
               <Text style={styles.loginLink}>Connectez-vous ici</Text>
             </TouchableOpacity>
           </View>
@@ -244,6 +350,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
+  },
+  registerButtonDisabled: {
+    backgroundColor: '#D1D5DB',
   },
   registerButtonText: {
     color: '#FFFFFF',

@@ -13,13 +13,15 @@ import AuthNavigation from './app/navigation/AuthNavigation';
 import AppNavigator from './app/navigation/AppNavigator';
 import SplashScreenn from './app/screens/splash';
 import navigationTheme from './app/navigation/navigationTheme';
-
+import { AuthProvider, useAuth } from './app/context/AuthContext';
+import { CampaignsProvider } from './app/context/CampaignsContext';
+import { BannersProvider } from './app/context/BannersContext';
 
 SplashScreen.preventAutoHideAsync();
 
-export default function App() {
+function AppContent() {
   const [showSplash, setShowSplash] = useState(true);
-  const [user, setUser] = useState(true);
+  const { isAuthenticated, isLoading } = useAuth();
 
   const [fontsLoaded] = useFonts({
     Tajawal_700Bold,
@@ -29,36 +31,50 @@ export default function App() {
 
   useEffect(() => {
     const prepare = async () => {
-      // simulate loading assets, auth check, etc.
+      // Simulate loading assets, etc.
       await new Promise((resolve) => setTimeout(resolve, 1500));
-      setUser(true);
     };
+    
     prepare();
   }, []);
 
   const onLayoutRootView = useCallback(() => {
-    if (fontsLoaded) {
+    if (fontsLoaded && !isLoading) {
       SplashScreen.hideAsync();
       setTimeout(() => setShowSplash(false), 2000);
     }
-  }, [fontsLoaded]);
+  }, [fontsLoaded, isLoading]);
 
   // don't render until fonts are loaded
-  if (!fontsLoaded) return null;
+  if (!fontsLoaded || isLoading) return null;
 
   return (
     <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
-     
-            <NavigationContainer theme={navigationTheme}>
-              {showSplash ? (
-                <SplashScreenn />
-              ) : user ? (
-                <AppNavigator />
-              ) : (
-                <AuthNavigation />
-              )}
-            </NavigationContainer>
-       
+      <NavigationContainer theme={navigationTheme}>
+        <BannersProvider>
+          <CampaignsProvider>
+            {showSplash ? (
+              <SplashScreenn />
+            ) : isAuthenticated ? (
+              <AppNavigator />
+            ) : (
+              <AuthNavigation />
+            )}
+          </CampaignsProvider>
+        </BannersProvider>
+      </NavigationContainer>
     </View>
+  );
+}
+
+export default function App() {
+  return (
+    <BannersProvider>
+      <AuthProvider>
+        <CampaignsProvider>
+          <AppContent />
+        </CampaignsProvider>
+      </AuthProvider>
+    </BannersProvider>
   );
 }

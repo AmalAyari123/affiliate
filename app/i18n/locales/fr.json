@@ -100,7 +100,9 @@
     "getLink": "Obtenir le lien",
     "analytics": "Analyses",
     "bannerCode": "Code de bannière",
-    "copyCode": "Copier le code"
+    "bannerLink": "Lien de bannière",
+    "copyCode": "Copier le code",
+    "copyLink": "Copier le lien"
   },
   "referrals": {
     "title": "Parrainages",

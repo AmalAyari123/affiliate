@@ -100,7 +100,9 @@
     "getLink": "Get Link",
     "analytics": "Analytics",
     "bannerCode": "Banner Code",
-    "copyCode": "Copy Code"
+    "bannerLink": "Banner Link",
+    "copyCode": "Copy Code",
+    "copyLink": "Copy Link"
   },
   "referrals": {
     "title": "Referrals",

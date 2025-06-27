@@ -1,68 +1,28 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, Clipboard } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowLeft, Share2, Copy, Eye, TrendingUp, DollarSign, Calendar, Users, Target, Gift, Clock, CircleCheck as CheckCircle, Star } from 'lucide-react-native';
-import { router, useLocalSearchParams } from 'expo-router';
-import { useNavigation } from '@react-navigation/native';
+import { ArrowLeft, Share2, Copy, Eye, TrendingUp, DollarSign, Calendar, Users, Target, Gift, Clock, CircleCheck as CheckCircle, Star, CircleAlert as AlertCircle } from 'lucide-react-native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 
+const IMAGE_BASE_URL = 'http://192.168.1.38';
 
 const CampaignDetails = () => {
-  
-    const navigation = useNavigation();
+  const navigation = useNavigation();
+  const route = useRoute();
+  const { campaign } = route.params;
 
-  // Mock campaign data - in real app, fetch based on ID
-  const campaign = {
-    id: '1',
-    name: 'Wamia Summer Sale 2024',
-    description: 'Get 25% extra commission on all summer products including fashion, accessories, and lifestyle items. This exclusive campaign runs throughout the summer season with special bonuses for top performers.',
-    image: 'https://images.pexels.com/photos/1263986/pexels-photo-1263986.jpeg?auto=compress&cs=tinysrgb&w=800',
-    commission: '20%',
-    discount: '15%',
-    startDate: '2024-06-01',
-    endDate: '2024-08-31',
-    status: 'active',
-    clicks: 456,
-    conversions: 23,
-    earnings: '$345.50',
-    tier: 'Gold',
-    priority: 1,
-    categories: ['Fashion', 'Accessories', 'Lifestyle'],
-    referralLink: 'https://customer.wamia.tn/summer-sale?ref=WAMIA123',
-    terms: [
-      'Commission applies to all qualifying products in selected categories',
-      'Minimum order value of $50 required',
-      'Commission paid within 30 days of order completion',
-      'Refunded orders will have commission deducted',
-      'Maximum 5 orders per customer per month'
-    ],
-    banners: [
-      {
-        id: '1',
-        name: 'Hero Banner',
-        size: '728x90',
-        image: 'https://images.pexels.com/photos/1263986/pexels-photo-1263986.jpeg?auto=compress&cs=tinysrgb&w=800',
-        clicks: 234,
-        impressions: 5670
-      },
-      {
-        id: '2',
-        name: 'Square Banner',
-        size: '300x300',
-        image: 'https://images.pexels.com/photos/1263986/pexels-photo-1263986.jpeg?auto=compress&cs=tinysrgb&w=800',
-        clicks: 156,
-        impressions: 3450
-      }
-    ],
-    topProducts: [
-      { name: 'Summer Dress Collection', sales: 45, commission: '$89.50' },
-      { name: 'Beach Accessories Set', sales: 32, commission: '$64.00' },
-      { name: 'Sunglasses Premium', sales: 28, commission: '$56.75' }
-    ]
-  };
+  const getStatusColor = status => status === 1 ? '#059669' : '#EF4444';
+  const getStatusText = status => status === 1 ? 'Active' : 'Inactive';
+  const getStatusIcon = status => status === 1 ? CheckCircle : AlertCircle;
 
-  const copyReferralLink = () => {
-    Alert.alert('Copied!', 'Referral link copied to clipboard');
+  const copyReferralLink = async () => {
+    try {
+      await Clipboard.setString(campaign.referral_link);
+      Alert.alert('Copied!', 'Referral link copied to clipboard');
+    } catch (error) {
+      Alert.alert('Error', 'Failed to copy link to clipboard');
+    }
   };
 
   const shareCampaign = () => {
@@ -104,7 +64,7 @@ const CampaignDetails = () => {
 
         {/* Campaign Hero */}
         <View style={styles.heroSection}>
-          <Image source={{ uri: campaign.image }} style={styles.heroImage} />
+          <Image source={{ uri: campaign.images_url?.[0]?.replace('https://magento.test', IMAGE_BASE_URL) }} style={styles.heroImage} />
           <LinearGradient
             colors={['rgba(255, 107, 53, 0.7)', 'rgba(30, 64, 175, 0.7)']}
             style={styles.heroOverlay}
@@ -112,9 +72,9 @@ const CampaignDetails = () => {
             <View style={styles.heroContent}>
               <View style={styles.heroHeader}>
                 <Text style={styles.heroTitle}>{campaign.name}</Text>
-                <View style={[styles.tierBadge, { backgroundColor: getTierColor(campaign.tier) }]}>
-                  <Star size={16} color="#000000" />
-                  <Text style={styles.tierText}>{campaign.tier}</Text>
+                <View style={[styles.statusBadge, { backgroundColor: getStatusColor(campaign.status) + '15' }]}> 
+                  {React.createElement(getStatusIcon(campaign.status), { size: 16, color: getStatusColor(campaign.status) })}
+                  <Text style={[styles.statusText, { color: getStatusColor(campaign.status) }]}> {getStatusText(campaign.status)}</Text>
                 </View>
               </View>
               <Text style={styles.heroDescription}>{campaign.description}</Text>
@@ -122,21 +82,30 @@ const CampaignDetails = () => {
           </LinearGradient>
         </View>
 
-        {/* Campaign Stats */}
-        <View style={styles.statsSection}>
-          <View style={styles.statCard}>
-            <DollarSign size={24} color="#059669" />
-            <Text style={styles.statValue}>{campaign.commission}</Text>
-            <Text style={styles.statLabel}>Commission</Text>
+        {/* Commission Stats - First Row */}
+        <View style={styles.commissionStatsSection}>
+          <View style={styles.commissionStatCard}>
+            <Clock size={24} color="#F59E0B" />
+            <Text style={styles.statValue}>{campaign.commission_pending || '0'}</Text>
+            <Text style={styles.statLabel}>Pending Commission</Text>
           </View>
+          <View style={styles.commissionStatCard}>
+            <DollarSign size={24} color="#059669" />
+            <Text style={styles.statValue}>{campaign.commission_earned || '0'}</Text>
+            <Text style={styles.statLabel}>Earned Commission</Text>
+          </View>
+        </View>
+
+        {/* Other Stats - Second Row with margin */}
+        <View style={styles.otherStatsSection}>
           <View style={styles.statCard}>
             <Gift size={24} color="#7C3AED" />
-            <Text style={styles.statValue}>{campaign.discount}</Text>
+            <Text style={styles.statValue}>{campaign.discount_amount}%</Text>
             <Text style={styles.statLabel}>Discount</Text>
           </View>
           <View style={styles.statCard}>
             <TrendingUp size={24} color="#FF6B35" />
-            <Text style={styles.statValue}>{campaign.conversions}</Text>
+            <Text style={styles.statValue}>{campaign.conversion_rate}</Text>
             <Text style={styles.statLabel}>Conversions</Text>
           </View>
           <View style={styles.statCard}>
@@ -150,7 +119,7 @@ const CampaignDetails = () => {
         <View style={styles.linkSection}>
           <Text style={styles.sectionTitle}>Your Referral Link</Text>
           <View style={styles.linkCard}>
-            <Text style={styles.linkText} numberOfLines={1}>{campaign.referralLink}</Text>
+            <Text style={styles.linkText} numberOfLines={1}>{campaign.referral_link}</Text>
             <TouchableOpacity style={styles.copyButton} onPress={copyReferralLink}>
               <Copy size={18} color="#FF6B35" />
             </TouchableOpacity>
@@ -253,7 +222,7 @@ container: {
     fontFamily: 'Inter-Bold',
     flex: 1,
   },
-  tierBadge: {
+  statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 12,
@@ -261,7 +230,7 @@ container: {
     paddingVertical: 4,
     marginLeft: 8,
   },
-  tierText: {
+  statusText: {
     fontSize: 12,
     fontWeight: '600',
     color: '#000000',
@@ -275,10 +244,31 @@ container: {
     opacity: 0.9,
     lineHeight: 20,
   },
-  statsSection: {
+  // Commission Stats - First Row
+  commissionStatsSection: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    marginBottom: 16,
+  },
+  commissionStatCard: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    marginHorizontal: 4,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  // Other Stats - Second Row with margin
+  otherStatsSection: {
     flexDirection: 'row',
     paddingHorizontal: 20,
     marginBottom: 32,
+    marginTop: 5,
   },
   statCard: {
     flex: 1,
@@ -539,6 +529,7 @@ container: {
     color: '#64748B',
     fontFamily: 'Inter-Regular',
     lineHeight: 20,
-  },});
+  },
+});
 
 export default CampaignDetails;
