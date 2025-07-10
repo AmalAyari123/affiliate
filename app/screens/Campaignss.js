@@ -8,6 +8,7 @@ import {
   Image,
   ImageBackground,
   Alert,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -26,7 +27,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '../hooks/useLanguage';
 import AppHeader from '../components/AppHeader';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import CampaignsContext from '../context/CampaignsContext';
 import * as Clipboard from 'expo-clipboard'; // Correct import for Expo Clipboard API
 
@@ -36,7 +37,19 @@ const Campaignss = () => {
   const { t } = useTranslation();
   const { isRTL } = useLanguage();
   const navigation = useNavigation();
-  const { campaigns, loading, error } = useContext(CampaignsContext);
+  const { campaigns, loading, error, loadCampaigns } = useContext(CampaignsContext);
+  const [refreshing, setRefreshing] = React.useState(false);
+  useFocusEffect(
+    React.useCallback(() => {
+      loadCampaigns && loadCampaigns();
+    }, [])
+  );
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await loadCampaigns();
+    setRefreshing(false);
+  };
 
   // Helper for status color and text
   const getStatusColor = status => status === 1 ? '#059669' : '#EF4444';
@@ -68,6 +81,7 @@ const Campaignss = () => {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
       >
         {/* Featured Campaign */}
         {featuredCampaign && (
@@ -77,7 +91,7 @@ const Campaignss = () => {
             </Text>
             <View style={styles.featuredCampaign}>
               <ImageBackground
-                source={{ uri: featuredCampaign.images_url?.[0]?.replace('https://magento.test', IMAGE_BASE_URL) }}
+                source={{ uri: featuredCampaign.images_url?.[0]?.replace('https://192.168.1.38', IMAGE_BASE_URL) }}
                 style={styles.featuredImage}
                 imageStyle={styles.featuredImageStyle}
               >
@@ -97,7 +111,7 @@ const Campaignss = () => {
                     <View style={[styles.featuredStats, isRTL && styles.rtlFeaturedStats]}>
                       <View style={styles.featuredStat}>
                         <Text style={[styles.featuredStatValue, isRTL && styles.rtlText]}>
-                          {featuredCampaign.commission}
+                         
                         </Text>
                         <Text style={[styles.featuredStatLabel, isRTL && styles.rtlText]}>
                           {t('campaigns.commission')}
@@ -131,7 +145,7 @@ const Campaignss = () => {
                 style={styles.campaignCard}
                 onPress={() => navigation.navigate('CampaignDetails', { campaign })}
               >
-                <Image source={{ uri: campaign.images_url?.[0]?.replace('https://magento.test', IMAGE_BASE_URL) }} style={styles.campaignImage} />
+                <Image source={{ uri: campaign.images_url?.[0]?.replace('https://192.168.1.38', IMAGE_BASE_URL) }} style={styles.campaignImage} />
                 <View style={styles.campaignContent}>
                   <View style={[styles.campaignHeader, isRTL && styles.rtlCampaignHeader]}>
                     <Text style={[styles.campaignName, isRTL && styles.rtlText]}>

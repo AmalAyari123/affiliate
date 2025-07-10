@@ -216,7 +216,8 @@ export const logout = async () => {
 };
 
 // Fetch Magento customer profile (GET /customers/me)
-export const getCustomerProfile = async () => {
+export const getCustomerProfile = async () => { 
+  
   try {
     const response = await api.get('/customers/me');
     if (response.ok) {

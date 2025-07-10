@@ -31,7 +31,22 @@ export const getTotalClicks = async () => {
   }
 };
 
+// Fetch affiliate transactions
+export const getAffiliateTransactions = async () => {
+  try {
+    const response = await api.get('/mpAffiliate/mine/transactions?searchCriteria');
+    if (response.ok) {
+      return { success: true, data: response.data };
+    } else {
+      return { success: false, error: response.problem || 'Unknown error' };
+    }
+  } catch (error) {
+    return { success: false, error: error.message || 'Unknown error' };
+  }
+};
+
 export default {
   getAffiliateCampaigns,
   getTotalClicks,
+  getAffiliateTransactions,
 }; 

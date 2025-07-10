@@ -1,5 +1,5 @@
 // app/screens/Commissions.js
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useContext } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,7 @@ import {
   Animated,
   Easing,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -39,13 +40,16 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '../hooks/useLanguage';
 import AppHeader from '../components/AppHeader';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import BottomSheet from '@devvie/bottom-sheet';
 import { withdrawFunds } from '../api/withdrawApi';
 import { getAffiliateAccount } from '../api/authApi';
+import TransactionsContext from '../context/TransactionsContext';
+import CampaignsContext from '../context/CampaignsContext';
+// REMOVE: import { getCampaigns } from '../api/campaignApi';
 
 
-export default function Commissions() {
+export default function Comissions() {
     const navigation = useNavigation();
   
   const { t } = useTranslation();
@@ -74,91 +78,104 @@ export default function Commissions() {
     balance: 0, 
     holding_balance: 0, 
     total_commission: 0,
-    created_at: null 
+    created_at: null,
+    total_paid: 0, // Added for total withdrawal
   });
-  const [thisMonthCommission, setThisMonthCommission] = useState(0);
+  const { transactions, loading: loadingTransactions, error, loadTransactions } = useContext(TransactionsContext);
+  const { campaigns, loading: loadingCampaigns, error: campaignsError, loadCampaigns } = useContext(CampaignsContext);
+  // REMOVE: const [campaigns, setCampaigns] = useState({});
+
+  // Build campaignMap for id->name lookup
+  const campaignMap = React.useMemo(() => {
+    const map = {};
+    (campaigns || []).forEach(c => { map[c.campaign_id] = c.name; });
+    return map;
+  }, [campaigns]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      loadTransactions();
+      loadCampaigns();
+    }, [])
+  );
+
+  // REMOVE: const loadCampaigns = async () => { ... }
+
+  // Calculate this month's commission: sum of all type=1, status=3, created_at in current month
+  const getThisMonthCommission = () => {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    return transactions
+      .filter(tx => tx.type === 1 && tx.status === 3 && tx.created_at)
+      .filter(tx => {
+        const txDate = new Date(tx.created_at);
+        return txDate.getMonth() === currentMonth && txDate.getFullYear() === currentYear;
+      })
+      .reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
+  };
+  const thisMonthCommission = getThisMonthCommission();
+
+  // Add refs for each input field in the modal
+  const userNameRef = useRef(null);
+  const ribRef = useRef(null);
+  const amountRef = useRef(null);
+  const messageRef = useRef(null);
+
+  // Move fetchAccount outside useEffect so it can be reused
+  const fetchAccount = async () => {
+    const res = await getAffiliateAccount();
+    if (res.success) {
+      setAccount({
+        balance: res.data.balance || 0,
+        holding_balance: res.data.holding_balance || 0,
+        total_commission: res.data.total_commission || 0,
+        created_at: res.data.created_at || null,
+        total_paid: res.data.total_paid || 0, // Initialize total_paid
+      });
+    }
+  };
 
   useEffect(() => {
-    const fetchAccount = async () => {
-      const res = await getAffiliateAccount();
-      if (res.success) {
-        setAccount({
-          balance: res.data.balance || 0,
-          holding_balance: res.data.holding_balance || 0,
-          total_commission: res.data.total_commission || 0,
-          created_at: res.data.created_at || null,
-        });
-        
-        // Calculate this month's commission based on created_at
-        if (res.data.created_at) {
-          const createdDate = new Date(res.data.created_at);
-          const currentDate = new Date();
-          const currentMonth = currentDate.getMonth();
-          const currentYear = currentDate.getFullYear();
-          
-          // If account was created this month, use total_commission
-          // Otherwise, you might want to fetch monthly data from API
-          if (createdDate.getMonth() === currentMonth && createdDate.getFullYear() === currentYear) {
-            setThisMonthCommission(res.data.total_commission || 0);
-          } else {
-            // For now, we'll use a portion of total_commission as this month's
-            // In a real implementation, you'd fetch monthly commission data
-            setThisMonthCommission(Math.round((res.data.total_commission || 0) * 0.3));
-          }
-        }
-      }
-    };
     fetchAccount();
   }, []);
 
   const commissionStats = [
-    { title: t('commissions.totalEarned'), value: `$${account.total_commission}`, icon: DollarSign, color: '#10B981' },
-    { title: t('commissions.availableBalance'), value: `$${account.balance}`, icon: Wallet, color: '#3B82F6' },
-    { title: t('common.pending'), value: `$${account.holding_balance}`, icon: Clock, color: '#F59E0B' },
-    { title: t('commissions.thisMonth'), value: `$${thisMonthCommission}`, icon: TrendingUp, color: '#8B5CF6' },
-  ];
-
-  const commissionHistory = [
-    { id: 1, type: 'commission',  description: 'Commission from John Doe purchase',      amount: '+$45.00',  date: '2024-01-15', status: 'completed', orderId: '#ORD-001' },
-    { id: 2, type: 'withdrawal', description: 'PayPal withdrawal',                       amount: '-$200.00', date: '2024-01-14', status: 'completed', orderId: '#WD-002' },
-    { id: 3, type: 'commission',  description: 'Commission from Sarah Johnson purchase', amount: '+$78.50',  date: '2024-01-13', status: 'pending',   orderId: '#ORD-003' },
-    { id: 4, type: 'commission',  description: 'Commission from Mike Chen purchase',    amount: '+$125.00', date: '2024-01-12', status: 'completed', orderId: '#ORD-004' },
-    { id: 5, type: 'refund',      description: 'Refund adjustment - Emma Davis',         amount: '-$32.50',  date: '2024-01-11', status: 'completed', orderId: '#REF-005' },
+    { title: t('commissions.totalEarned'), value: account.total_commission, icon: DollarSign, color: '#10B981' },
+    { title: t('commissions.availableBalance'), value: account.balance, icon: Wallet, color: '#3B82F6' },
+    { title: t('common.pending'), value: account.holding_balance, icon: Clock, color: '#F59E0B' },
+    { title: 'Total Withdrawal' || 'Total Withdrawal', value: account.total_paid || 0, icon: Banknote, color: '#EF4444' },
+    { title: t('commissions.thisMonth'), value: thisMonthCommission, icon: TrendingUp, color: '#8B5CF6' },
   ];
 
   function getTransactionIcon(type) {
-    switch (type) {
-      case 'commission':  return ArrowUpCircle;
-      case 'withdrawal': return ArrowDownCircle;
-      case 'refund':     return X;
-      default:           return DollarSign;
-    }
+    if (type === 1) return ArrowUpCircle;
+    if (type === 2) return ArrowDownCircle;
+    return DollarSign;
   }
   function getTransactionColor(type) {
-    switch (type) {
-      case 'commission':  return '#10B981';
-      case 'withdrawal': return '#3B82F6';
-      case 'refund':     return '#EF4444';
-      default:           return '#64748B';
-    }
+    if (type === 1) return '#10B981';
+    if (type === 2) return '#3B82F6';
+    return '#64748B';
   }
   function getStatusColor(status) {
-    switch (status) {
-      case 'completed': return '#10B981';
-      case 'pending':   return '#F59E0B';
-      case 'failed':    return '#EF4444';
-      default:          return '#64748B';
-    }
+    if (status === 3) return '#10B981';
+    if (status === 2) return '#F59E0B';
+    return '#64748B';
   }
-
-  const filteredTransactions = commissionHistory.filter(tx => {
-    const q = searchQuery.toLowerCase();
-    return (
-      (tx.description.toLowerCase().includes(q) ||
-       tx.orderId.toLowerCase().includes(q)) &&
-      (selectedFilter === 'all' || tx.type === selectedFilter)
-    );
-  });
+  function getStatusText(status) {
+    if (status === 3) return 'Completed';
+    if (status === 2) return 'Pending';
+    return 'Unknown';
+  }
+  function formatDate(dateString) {
+    if (!dateString) return '';
+    const d = new Date(dateString);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}/${mm}/${dd}`;
+  }
 
   const handleExpirationDateChange = (text) => {
     const cleanedText = text.replace(/[^\d]/g, '');
@@ -251,6 +268,41 @@ export default function Commissions() {
     }
   };
 
+  // Filter transactions based on selectedFilter and searchQuery (by campaign name for commissions)
+  const filteredTransactions = transactions.filter(tx => {
+    // Filter by type
+    if (selectedFilter === 'commission' && tx.type !== 1) return false;
+    if (selectedFilter === 'withdrawal' && tx.type !== 2) return false;
+    if (selectedFilter === 'refund' && tx.type !== 3) return false; // if you have refund type
+
+    // Search by campaign name (for commission type)
+    if (searchQuery.trim()) {
+      if (tx.type === 1) {
+        const campaignName = campaignMap[tx.campaign_id] || '';
+        if (!campaignName.toLowerCase().includes(searchQuery.trim().toLowerCase())) {
+          return false;
+        }
+      } else {
+        // Optionally: filter other types by other fields, or always show them
+        // return false; // if you want to only search commissions
+      }
+    }
+
+    return true;
+  });
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await Promise.all([
+      loadTransactions(),
+      fetchAccount(),
+      loadCampaigns()
+    ]);
+    setRefreshing(false);
+  };
+
   return (
     <SafeAreaView style={[styles.container, isRTL && styles.rtlContainer]}>
       <AppHeader
@@ -264,6 +316,7 @@ export default function Commissions() {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
       >
         {/* Balance card */}
         <View style={styles.balanceCard}>
@@ -279,14 +332,18 @@ export default function Commissions() {
               </Text>
               <PiggyBank size={24} color="#FFF" />
             </View>
-            <Text style={[styles.balanceAmount, isRTL && styles.rtlText]}>${account.balance}</Text>
+            <Text style={[styles.balanceAmount, isRTL && styles.rtlText]}>
+              {account.balance}
+              <Text style={styles.currency}> DT</Text>
+            </Text>
             <View style={[styles.balanceFooter, isRTL && styles.rtlBalanceFooter]}>
               <View style={styles.balanceInfo}>
                 <Text style={[styles.balanceInfoLabel, isRTL && styles.rtlText]}>
                   {t('common.pending')}
                 </Text>
                 <Text style={[styles.balanceInfoValue, isRTL && styles.rtlText]}>
-                  ${account.holding_balance}
+                  {account.holding_balance}
+                  <Text style={styles.currency}> DT</Text>
                 </Text>
               </View>
               <View style={styles.balanceInfo}>
@@ -294,7 +351,8 @@ export default function Commissions() {
                   {t('commissions.thisMonth')}
                 </Text>
                 <Text style={[styles.balanceInfoValue, isRTL && styles.rtlText]}>
-                  ${thisMonthCommission}
+                  {thisMonthCommission}
+                  <Text style={styles.currency}> DT</Text>
                 </Text>
               </View>
             </View>
@@ -305,11 +363,12 @@ export default function Commissions() {
         <View style={[styles.statsContainer, isRTL && styles.rtlStatsContainer]}>
           {commissionStats.map((stat, i) => (
             <View key={i} style={styles.statCard}>
-              <View style={[styles.statIcon, { backgroundColor: `${stat.color}15` }]}>
+              <View style={[styles.statIcon, { backgroundColor: `${stat.color}15` }]}> 
                 <stat.icon size={20} color={stat.color} />
               </View>
               <Text style={[styles.statValue, isRTL && styles.rtlText]}>
                 {stat.value}
+                <Text style={styles.currency}> DT</Text>
               </Text>
               <Text style={[styles.statTitle, isRTL && styles.rtlText]}>
                 {stat.title}
@@ -399,50 +458,76 @@ export default function Commissions() {
           {t('commissions.transactionHistory')}
         </Text>
         <View style={styles.transactionList}>
-          {filteredTransactions.map((tx,i) => {
-            const Icon = getTransactionIcon(tx.type);
-            return (
-              <TouchableOpacity
-                key={i}
-                style={[styles.transactionItem, isRTL && styles.rtlTransactionItem]}
-              >
-                <View style={[styles.transactionIcon, { backgroundColor: `${getTransactionColor(tx.type)}15` }]}>
-                  <Icon size={20} color={getTransactionColor(tx.type)} />
-                </View>
-                <View style={[styles.transactionInfo, isRTL && styles.rtlTransactionInfo]}>
-                  <View style={[styles.transactionHeader, isRTL && styles.rtlTransactionHeader]}>
-                    <Text style={[styles.transactionDescription, isRTL && styles.rtlText]}>
-                      {tx.description}
-                    </Text>
-                    <Text style={[
-                      styles.transactionAmount,
-                      { color: tx.amount.includes('+') ? '#10B981' : '#EF4444' },
-                      isRTL && styles.rtlText
-                    ]}>
-                      {tx.amount}
-                    </Text>
+          {loadingTransactions ? (
+            <ActivityIndicator size="large" color="#3B82F6" style={{ marginTop: 20 }} />
+          ) : (
+            filteredTransactions.map((tx, i) => {
+              const Icon = getTransactionIcon(tx.type);
+              const isCommission = tx.type === 1;
+              const isWithdrawal = tx.type === 2;
+              const description = isCommission
+                ? `Commission earned from ${tx.customer_firstname || tx.extension_attributes?.customer_firstname || ''} ${tx.customer_lastname || tx.extension_attributes?.customer_lastname || ''}'s order`
+                : isWithdrawal
+                  ? 'Withdrawal'
+                  : 'Transaction';
+              const amount = isCommission ? `+${tx.amount}` : isWithdrawal ? `-${tx.amount}` : `${tx.amount}`;
+              const statusText = getStatusText(tx.status);
+              const campaignName = isCommission && tx.campaign_id ? campaignMap[tx.campaign_id] || 'Unknown Campaign' : '';
+              
+              return (
+                <TouchableOpacity
+                  key={tx.transaction_id || i}
+                  style={[styles.transactionItem, isRTL && styles.rtlTransactionItem]}
+                  onPress={() => {
+                    if (isCommission) {
+                      navigation.navigate('TransactionDetails', { transaction: tx, campaignName });
+                    }
+                  }}
+                  disabled={!isCommission}
+                >
+                  <View style={[styles.transactionIcon, { backgroundColor: `${getTransactionColor(tx.type)}15` }]}> 
+                    <Icon size={20} color={getTransactionColor(tx.type)} />
                   </View>
-                  <View style={[styles.transactionFooter, isRTL && styles.rtlTransactionFooter]}>
-                    <Text style={[styles.transactionDate, isRTL && styles.rtlText]}>
-                      {tx.date}
-                    </Text>
-                    <Text style={[styles.transactionOrderId, isRTL && styles.rtlText]}>
-                      {tx.orderId}
-                    </Text>
-                    <View style={[styles.statusBadge, { backgroundColor: `${getStatusColor(tx.status)}15` }]}>
+                  <View style={[styles.transactionInfo, isRTL && styles.rtlTransactionInfo]}>
+                    <View style={[styles.transactionHeader, isRTL && styles.rtlTransactionHeader]}>
+                      <Text style={[styles.transactionDescription, isRTL && styles.rtlText]}>
+                        {description}
+                      </Text>
                       <Text style={[
-                        styles.statusText,
-                        { color: getStatusColor(tx.status) },
+                        styles.transactionAmount,
+                        { color: isCommission ? '#10B981' : isWithdrawal ? '#EF4444' : '#64748B' },
                         isRTL && styles.rtlText
                       ]}>
-                        {tx.status}
+                        {amount}
+                        <Text style={styles.currency}> DT</Text>
                       </Text>
                     </View>
+                    <View style={[styles.transactionFooter, isRTL && styles.rtlTransactionFooter]}>
+                      <Text style={[styles.transactionDate, isRTL && styles.rtlText]}>
+                        {isCommission ? campaignName : formatDate(tx.created_at)}
+                      </Text>
+                      <Text
+                        style={[styles.transactionOrderId, isRTL && styles.rtlText, { flex: 1 }]}
+                        numberOfLines={1}
+                        ellipsizeMode="tail"
+                      >
+                        {tx.product_name || ''}
+                      </Text>
+                      <View style={[styles.statusBadge, { backgroundColor: `${getStatusColor(tx.status)}15`, marginLeft: 8, alignSelf: 'center' }]}> 
+                        <Text style={[
+                          styles.statusText,
+                          { color: getStatusColor(tx.status) },
+                          isRTL && styles.rtlText
+                        ]}>
+                          {statusText}
+                        </Text>
+                      </View>
+                    </View>
                   </View>
-                </View>
-              </TouchableOpacity>
-            );
-          })}
+                </TouchableOpacity>
+              );
+            })
+          )}
         </View>
       </ScrollView>
 
@@ -454,7 +539,7 @@ export default function Commissions() {
           enabled={true}
         >
           <View style={{width:'100%', alignItems:'center', flex: 1}}>
-            {/* Card visualization */}
+            {/* Card visualization - fixed at the top */}
             <View style={{alignItems:'center', width:'100%', marginBottom:8}}>
               <ImageBackground
                 source={require('../../assets/card-front.png')}
@@ -489,7 +574,7 @@ export default function Commissions() {
               showsVerticalScrollIndicator={false} 
               style={{width:'100%'}} 
               contentContainerStyle={{alignItems:'center', paddingBottom:80}}
-              keyboardShouldPersistTaps="handled"
+              keyboardShouldPersistTaps="always"
               keyboardDismissMode="none"
             >
               <View style={{alignItems:'flex-start', width:'90%', marginBottom:8}}>
@@ -497,6 +582,7 @@ export default function Commissions() {
                   color:'#7f7f7f', fontFamily:'EbrimaBold', fontSize:13, paddingLeft:2, marginBottom:2
                 }}>Account Holder</Text>
                 <TextInput
+                  ref={userNameRef}
                   style={{
                     padding:6, width:'100%',
                     borderBottomColor:'#7f7f7f',borderWidth:1,borderColor:'transparent', fontSize:14
@@ -508,6 +594,7 @@ export default function Commissions() {
                   autoCorrect={false}
                   returnKeyType="next"
                   blurOnSubmit={false}
+                  onSubmitEditing={() => ribRef.current && ribRef.current.focus()}
                 />
               </View>
               <View style={{alignItems:'flex-start', width:'90%', marginBottom:8}}>
@@ -515,6 +602,7 @@ export default function Commissions() {
                   color:'#7f7f7f', fontFamily:'EbrimaBold', fontSize:13, paddingLeft:2, marginBottom:2
                 }}>RIB</Text>
                 <TextInput
+                  ref={ribRef}
                   style={{
                     padding:6, width:'100%',
                     borderBottomColor:'#7f7f7f',borderWidth:1,borderColor:'transparent', fontSize:14
@@ -526,6 +614,7 @@ export default function Commissions() {
                   maxLength={20}
                   returnKeyType="next"
                   blurOnSubmit={false}
+                  onSubmitEditing={() => amountRef.current && amountRef.current.focus()}
                 />
               </View>
               <View style={{alignItems:'flex-start', width:'90%', marginBottom:8}}>
@@ -533,6 +622,7 @@ export default function Commissions() {
                   color:'#7f7f7f', fontFamily:'EbrimaBold', fontSize:13, paddingLeft:2, marginBottom:2
                 }}>Amount</Text>
                 <TextInput
+                  ref={amountRef}
                   style={{
                     padding:6, width:'100%',
                     borderBottomColor:'#7f7f7f',borderWidth:1,borderColor:'transparent', fontSize:14
@@ -543,6 +633,7 @@ export default function Commissions() {
                   keyboardType="numeric"
                   returnKeyType="next"
                   blurOnSubmit={false}
+                  onSubmitEditing={() => messageRef.current && messageRef.current.focus()}
                 />
               </View>
               <View style={{alignItems:'flex-start', width:'90%', marginBottom:8}}>
@@ -550,6 +641,7 @@ export default function Commissions() {
                   color:'#7f7f7f', fontFamily:'EbrimaBold', fontSize:13, paddingLeft:2, marginBottom:2
                 }}>Message</Text>
                 <TextInput
+                  ref={messageRef}
                   style={{
                     padding:6, width:'100%',
                     borderBottomColor:'#7f7f7f',borderWidth:1,borderColor:'transparent', fontSize:14, minHeight:40
@@ -560,6 +652,7 @@ export default function Commissions() {
                   multiline
                   returnKeyType="done"
                   blurOnSubmit={true}
+                  onSubmitEditing={() => {}}
                 />
               </View>
               <View style={{ width: '90%', alignItems: 'center', marginTop: 16 }}>
@@ -1085,6 +1178,12 @@ const styles = StyleSheet.create({
   },
   rtlPaymentMethod: {
     flexDirection: 'row-reverse',
+  },
+  currency: {
+    fontSize: 12,
+    color: '#FFF',
+    marginLeft: 2,
+    fontFamily: 'Inter-Regular',
   },
 
 });

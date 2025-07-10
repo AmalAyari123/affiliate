@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Alert, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Users, Award, TrendingUp, Mail, Phone, MapPin, Globe, LogOut } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { getCustomerProfile, getAffiliateAccount } from '../api/authApi';
+import { useFocusEffect } from '@react-navigation/native';
 
 const Profile = () => {
   const { signOut } = useAuth();
@@ -15,26 +16,28 @@ const Profile = () => {
     email: '',
   });
   const [totalCommission, setTotalCommission] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const profileRes = await getCustomerProfile();
-      if (profileRes.success) {
-        setProfileData({
-          firstname: profileRes.data.firstname,
-          lastname: profileRes.data.lastname,
-          email: profileRes.data.email,
-        });
-      }
-      const accountRes = await getAffiliateAccount();
-      if (accountRes.success) {
-        setTotalCommission(accountRes.data.total_commission);
-        console.log("Total commission:", accountRes.data.total_commission);
-
-      }
-    };
-    fetchData();
-  }, []);
+  const fetchData = async () => {
+    const profileRes = await getCustomerProfile();
+    if (profileRes.success) {
+      setProfileData({
+        firstname: profileRes.data.firstname,
+        lastname: profileRes.data.lastname,
+        email: profileRes.data.email,
+      });
+    }
+    const accountRes = await getAffiliateAccount();
+    if (accountRes.success) {
+      setTotalCommission(accountRes.data.total_commission);
+      console.log("Total commission:", accountRes.data.total_commission);
+    }
+  };
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchData();
+    }, [])
+  );
 
   const displayName = `${profileData.firstname} ${profileData.lastname}`.trim() || 'Wamia Ambassador';
   const displayEmail = profileData.email || 'ambassador@wamia.com';
@@ -44,6 +47,12 @@ const Profile = () => {
     { title: 'Total Earnings', value: `$${totalCommission}`, icon: TrendingUp, color: '#10B981' },
     { title: 'Rank', value: 'Gold', icon: Award, color: '#F59E0B' },
   ];
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchData();
+    setRefreshing(false);
+  };
 
   const handleLogout = () => {
     Alert.alert(
@@ -72,7 +81,11 @@ const Profile = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
+      >
         {/* Profile Card */}
         <View style={styles.profileCard}>
           <LinearGradient

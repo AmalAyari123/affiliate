@@ -1,9 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, Clipboard } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, Clipboard, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft, Share2, Copy, Eye, TrendingUp, DollarSign, Calendar, Users, Target, Gift, Clock, CircleCheck as CheckCircle, Star, CircleAlert as AlertCircle } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { useContext, useState } from 'react';
+import TransactionsContext from '../context/TransactionsContext';
 
 const IMAGE_BASE_URL = 'http://192.168.1.38';
 
@@ -11,9 +13,50 @@ const CampaignDetails = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const { campaign } = route.params;
+  const { transactions, loadTransactions } = useContext(TransactionsContext);
+  const [refreshing, setRefreshing] = useState(false);
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await loadTransactions();
+    setRefreshing(false);
+  };
+  if (transactions.length > 0) {
+    console.log('Sample transaction:', transactions[0]);
+  }
+  const commissionTransactions = transactions.filter(
+    tx => tx.type === 1 && String(tx.campaign_id) === String(campaign.campaign_id)
+  );
 
-  const getStatusColor = status => status === 1 ? '#059669' : '#EF4444';
-  const getStatusText = status => status === 1 ? 'Active' : 'Inactive';
+  // Helper functions (copied from Comissions.js for consistency)
+  function getTransactionIcon(type) {
+    if (type === 1) return CheckCircle;
+    if (type === 2) return ArrowLeft;
+    return DollarSign;
+  }
+  function getTransactionColor(type) {
+    if (type === 1) return '#10B981';
+    if (type === 2) return '#3B82F6';
+    return '#64748B';
+  }
+  function getStatusColor(status) {
+    if (status === 3) return '#10B981';
+    if (status === 2) return '#F59E0B';
+    return '#64748B';
+  }
+  function getStatusText(status) {
+    if (status === 3) return 'Completed';
+    if (status === 2) return 'Pending';
+    return 'Unknown';
+  }
+  function formatDate(dateString) {
+    if (!dateString) return '';
+    const d = new Date(dateString);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}/${mm}/${dd}`;
+  }
+
   const getStatusIcon = status => status === 1 ? CheckCircle : AlertCircle;
 
   const copyReferralLink = async () => {
@@ -39,9 +82,32 @@ const CampaignDetails = () => {
     }
   };
 
+  // Calculate days left until campaign expires
+  let expirySentence = '';
+  if (campaign.to_date) {
+    const now = new Date();
+    const expiryDate = new Date(campaign.to_date);
+    // Zero out time for accurate day diff
+    now.setHours(0,0,0,0);
+    expiryDate.setHours(0,0,0,0);
+    const diffTime = expiryDate - now;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    if (diffDays > 0) {
+      expirySentence = `This campaign expires in ${diffDays} day${diffDays > 1 ? 's' : ''}.`;
+    } else if (diffDays === 0) {
+      expirySentence = `This campaign expires today.`;
+    } else {
+      expirySentence = `This campaign has expired.`;
+    }
+  }
+
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
+      >
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
@@ -64,7 +130,7 @@ const CampaignDetails = () => {
 
         {/* Campaign Hero */}
         <View style={styles.heroSection}>
-          <Image source={{ uri: campaign.images_url?.[0]?.replace('https://magento.test', IMAGE_BASE_URL) }} style={styles.heroImage} />
+          <Image source={{ uri: campaign.images_url?.[0]?.replace('https://192.168.1.38', IMAGE_BASE_URL) }} style={styles.heroImage} />
           <LinearGradient
             colors={['rgba(255, 107, 53, 0.7)', 'rgba(30, 64, 175, 0.7)']}
             style={styles.heroOverlay}
@@ -82,16 +148,39 @@ const CampaignDetails = () => {
           </LinearGradient>
         </View>
 
+        {/* Expiry Info */}
+        {expirySentence ? (
+          <View style={{
+            backgroundColor: '#FFF7ED',
+            borderRadius: 12,
+            padding: 12,
+            marginHorizontal: 20,
+            marginBottom: 12,
+            alignItems: 'center',
+            borderWidth: 1,
+            borderColor: '#FDBA74'
+          }}>
+            <Text style={{
+              color: '#FF6B35',
+              fontWeight: '700',
+              fontSize: 15,
+              fontFamily: 'Inter-Bold'
+            }}>
+              {expirySentence}
+            </Text>
+          </View>
+        ) : null}
+
         {/* Commission Stats - First Row */}
         <View style={styles.commissionStatsSection}>
           <View style={styles.commissionStatCard}>
             <Clock size={24} color="#F59E0B" />
-            <Text style={styles.statValue}>{campaign.commission_pending || '0'}</Text>
+            <Text style={styles.statValue}>{campaign.commission_pending }</Text>
             <Text style={styles.statLabel}>Pending Commission</Text>
           </View>
           <View style={styles.commissionStatCard}>
             <DollarSign size={24} color="#059669" />
-            <Text style={styles.statValue}>{campaign.commission_earned || '0'}</Text>
+            <Text style={styles.statValue}>{campaign.commission_earned}</Text>
             <Text style={styles.statLabel}>Earned Commission</Text>
           </View>
         </View>
@@ -124,6 +213,41 @@ const CampaignDetails = () => {
               <Copy size={18} color="#FF6B35" />
             </TouchableOpacity>
           </View>
+        </View>
+
+        {/* Orders Section */}
+        <View style={styles.linkSection}>
+          <Text style={styles.sectionTitle}>Orders</Text>
+          {commissionTransactions.length === 0 ? (
+            <Text style={{ color: '#64748B', fontStyle: 'italic', marginTop: 8 }}>No orders yet.</Text>
+          ) : (
+            commissionTransactions.map((tx, i) => {
+              const Icon = getTransactionIcon(tx.type);
+              const description = `Commission from ${tx.customer_firstname || tx.extension_attributes?.customer_firstname || ''} ${tx.customer_lastname || tx.extension_attributes?.customer_lastname || ''}`;
+              const amount = `+$${tx.amount}`;
+              const statusText = getStatusText(tx.status);
+              return (
+                <View key={tx.transaction_id || i} style={styles.transactionItem}>
+                  <View style={[styles.transactionIcon, { backgroundColor: `${getTransactionColor(tx.type)}15` }]}> 
+                    <Icon size={20} color={getTransactionColor(tx.type)} />
+                  </View>
+                  <View style={styles.transactionInfo}>
+                    <View style={styles.transactionHeader}>
+                      <Text style={styles.transactionDescription}>{description}</Text>
+                      <Text style={[styles.transactionAmount, { color: '#10B981' }]}>{amount}</Text>
+                    </View>
+                    <View style={styles.transactionFooter}>
+                      <Text style={styles.transactionDate}>{formatDate(tx.created_at)}</Text>
+                      <Text style={[styles.transactionOrderId, { flex: 1 }]} numberOfLines={1} ellipsizeMode="tail">{tx.product_name || ''}</Text>
+                      <View style={[styles.statusBadge, { backgroundColor: `${getStatusColor(tx.status)}15`, marginLeft: 8, alignSelf: 'center' }]}> 
+                        <Text style={[styles.statusText, { color: getStatusColor(tx.status) }]}>{statusText}</Text>
+                      </View>
+                    </View>
+                  </View>
+                </View>
+              );
+            })
+          )}
         </View>
 
         {/* ...rest of your sections remain unchanged... */}
@@ -529,6 +653,73 @@ container: {
     color: '#64748B',
     fontFamily: 'Inter-Regular',
     lineHeight: 20,
+  },
+  transactionItem: {
+    flexDirection: 'row',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  transactionIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  transactionInfo: {
+    flex: 1,
+  },
+  transactionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  transactionDescription: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#0F172A',
+    fontFamily: 'Inter-SemiBold',
+    flex: 1,
+  },
+  transactionAmount: {
+    fontSize: 16,
+    fontWeight: '700',
+    fontFamily: 'Inter-Bold',
+  },
+  transactionFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  transactionDate: {
+    fontSize: 12,
+    color: '#64748B',
+    fontFamily: 'Inter-Regular',
+    marginRight: 8,
+  },
+  transactionOrderId: {
+    fontSize: 12,
+    color: '#64748B',
+    fontFamily: 'Inter-Regular',
+    marginRight: 8,
+  },
+  statusBadge: {
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  statusText: {
+    fontSize: 12,
+    fontFamily: 'Inter-Medium',
+    textTransform: 'capitalize',
   },
 });
 

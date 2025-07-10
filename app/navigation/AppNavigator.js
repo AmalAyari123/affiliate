@@ -67,6 +67,7 @@ const AppNavigator = () =>  {
           ),
         }}
       />
+      {/*
       <Tab.Screen
         name="referrals"
              component={Referrals}
@@ -77,6 +78,7 @@ const AppNavigator = () =>  {
           ),
         }}
       />
+      */}
       <Tab.Screen
         name="commissions"
               component={CommissionNavigator}
@@ -87,6 +89,7 @@ const AppNavigator = () =>  {
           ),
         }}
       />
+      {/*
       <Tab.Screen
         name="analytics"
               component={Analytics}
@@ -97,6 +100,7 @@ const AppNavigator = () =>  {
           ),
         }}
       />
+      */}
       <Tab.Screen
         name="profile"
               component={Profile}

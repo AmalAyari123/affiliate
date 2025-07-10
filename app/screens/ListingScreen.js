@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ImageBackground, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ImageBackground, Image, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { TrendingUp, DollarSign, Users, Eye, Bell, Gift, Target, Zap, User } from 'lucide-react-native';
@@ -9,6 +9,8 @@ import { useLanguage } from '../hooks/useLanguage';
 import AppHeader from '../components/AppHeader';
 import { getAffiliateAccount, getCustomerProfile } from '../api/authApi';
 import { getTotalClicks } from '../api/campaignApi';
+import TransactionsContext from '../context/TransactionsContext';
+import { useFocusEffect } from '@react-navigation/native';
 
 const Dashboard = () => {
   const { t } = useTranslation();
@@ -24,40 +26,56 @@ const Dashboard = () => {
     lastname: ''
   });
   const [totalClicks, setTotalClicks] = useState(0);
+  const [activeReferrals, setActiveReferrals] = useState(0);
+  const { transactions, loading: loadingTransactions, error, loadTransactions } = React.useContext(TransactionsContext);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      // Fetch account data
-      const accountRes = await getAffiliateAccount();
-      if (accountRes.success) {
-        setAccount({
-          total_commission: accountRes.data.total_commission || 0,
-          balance: accountRes.data.balance || 0,
-          holding_balance: accountRes.data.holding_balance || 0,
-        });
-      }
-      
-      // Fetch customer profile data
-      const profileRes = await getCustomerProfile();
-      if (profileRes.success) {
-        setCustomerProfile({
-          firstname: profileRes.data.firstname || '',
-          lastname: profileRes.data.lastname || ''
-        });
-      }
-      
-      // Fetch total clicks from campaigns
-      const clicksRes = await getTotalClicks();
-      if (clicksRes.success) {
-        setTotalClicks(clicksRes.data);
-      }
-    };
-    fetchData();
-  }, []);
+  const fetchData = async () => {
+    // Fetch account data
+    const accountRes = await getAffiliateAccount();
+    if (accountRes.success) {
+      setAccount({
+        total_commission: accountRes.data.total_commission || 0,
+        balance: accountRes.data.balance || 0,
+        holding_balance: accountRes.data.holding_balance || 0,
+      });
+    }
+    // Fetch customer profile data
+    const profileRes = await getCustomerProfile();
+    if (profileRes.success) {
+      setCustomerProfile({
+        firstname: profileRes.data.firstname || '',
+        lastname: profileRes.data.lastname || ''
+      });
+    }
+    // Fetch total clicks from campaigns
+    const clicksRes = await getTotalClicks();
+    if (clicksRes.success) {
+      setTotalClicks(clicksRes.data);
+    }
+    // Calculate unique, non-empty buyer_ids (optionally only for commission transactions)
+    if (Array.isArray(transactions)) {
+      const uniqueBuyerIds = new Set(
+        transactions
+          .filter(tx => tx.buyer_id !== null && tx.buyer_id !== undefined && tx.buyer_id !== '' && tx.type === 1)
+          .map(tx => String(tx.buyer_id))
+      );
+      setActiveReferrals(uniqueBuyerIds.size);
+    }
+  };
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchData();
+    }, [])
+  );
+
+  const handleRefresh = async () => {
+    await fetchData();
+    loadTransactions && loadTransactions();
+  };
 
   const dashboardStats = [
     { title: t('dashboard.totalEarnings'), value: `$${account.total_commission}`, icon: DollarSign, color: '#FF6B35', change: '+12.5%' },
-    { title: t('dashboard.activeReferrals'), value: '156', icon: Users, color: '#1E40AF', change: '+8.2%' },
+    { title: t('dashboard.activeReferrals'), value: activeReferrals.toString(), icon: Users, color: '#1E40AF', change: '+8.2%' },
     { title: t('dashboard.commissionRate'), value: '15%', icon: TrendingUp, color: '#7C3AED', change: '+2.0%' },
     { title: t('dashboard.totalClicks'), value: totalClicks.toString(), icon: Eye, color: '#059669', change: '+18.7%' },
   ];
@@ -95,6 +113,7 @@ const Dashboard = () => {
         style={styles.scrollView} 
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={loadingTransactions} onRefresh={handleRefresh} />}
       >
         {/* Welcome Section */}
         <View style={[styles.welcomeSection, isRTL && styles.rtlWelcomeSection]}>
@@ -145,56 +164,74 @@ const Dashboard = () => {
           ))}
         </View>
 
-        {/* Quick Actions */}
-        <Text style={[styles.sectionTitle, isRTL && styles.rtlText]}>{t('dashboard.quickActions')}</Text>
-        <View style={[styles.quickActions, isRTL && styles.rtlQuickActions]}>
-          <TouchableOpacity style={styles.actionButton}>
-            <View style={[styles.actionIcon, { backgroundColor: '#FF6B3515' }]}>
-              <Gift size={24} color="#FF6B35" />
-            </View>
-            <Text style={[styles.actionText, isRTL && styles.rtlText]}>{t('dashboard.inviteFriends')}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
-            <View style={[styles.actionIcon, { backgroundColor: '#05966915' }]}>
-              <Target size={24} color="#059669" />
-            </View>
-            <Text style={[styles.actionText, isRTL && styles.rtlText]}>{t('dashboard.trackOrders')}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
-            <View style={[styles.actionIcon, { backgroundColor: '#1E40AF15' }]}>
-              <Zap size={24} color="#1E40AF" />
-            </View>
-            <Text style={[styles.actionText, isRTL && styles.rtlText]}>{t('dashboard.withdraw')}</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Recent Activity */}
+        {/* Recent Activity - show transactions from last 3 days styled like Comissions.js */}
         <Text style={[styles.sectionTitle, isRTL && styles.rtlText]}>{t('dashboard.recentActivity')}</Text>
         <View style={styles.activityContainer}>
-          {recentActivities.map((activity, index) => (
-            <View key={index} style={[styles.activityItem, isRTL && styles.rtlActivityItem]}>
-              <View style={[styles.activityIcon, { 
-                backgroundColor: activity.type === 'commission' ? '#05966915' : 
-                                activity.type === 'referral' ? '#FF6B3515' : 
-                                activity.type === 'payment' ? '#1E40AF15' : '#F59E0B15' 
-              }]}>
-                <View style={[styles.activityDot, {
-                  backgroundColor: activity.type === 'commission' ? '#059669' : 
-                                  activity.type === 'referral' ? '#FF6B35' : 
-                                  activity.type === 'payment' ? '#1E40AF' : '#F59E0B'
-                }]} />
-              </View>
-              <View style={[styles.activityContent, isRTL && styles.rtlActivityContent]}>
-                <Text style={[styles.activityDescription, isRTL && styles.rtlText]}>{activity.description}</Text>
-                <Text style={[styles.activityTime, isRTL && styles.rtlText]}>{activity.time}</Text>
-              </View>
-              <Text style={[styles.activityAmount, { 
-                color: activity.amount.includes('+') ? '#059669' : '#64748B' 
-              }, isRTL && styles.rtlText]}>
-                {activity.amount}
-              </Text>
-            </View>
-          ))}
+          {transactions
+            .filter(tx => {
+              if (!tx.updated_at) return false;
+              const txDate = new Date(tx.updated_at);
+              const now = new Date();
+              const diffTime = now - txDate;
+              const diffDays = diffTime / (1000 * 60 * 60 * 24);
+              return diffDays <= 3;
+            })
+            .map((tx, i) => {
+              // Style and logic from Comissions.js
+              const isCommission = tx.type === 1;
+              const isWithdrawal = tx.type === 2;
+              const Icon = isCommission ? require('lucide-react-native').ArrowUpCircle : isWithdrawal ? require('lucide-react-native').ArrowDownCircle : require('lucide-react-native').DollarSign;
+              const description = isCommission
+                ? `Commission earned from ${tx.customer_firstname || tx.extension_attributes?.customer_firstname || ''} ${tx.customer_lastname || tx.extension_attributes?.customer_lastname || ''}'s order`
+                : isWithdrawal
+                  ? 'Withdrawal'
+                  : 'Transaction';
+              const amount = isCommission ? `+${tx.amount}` : isWithdrawal ? `-${tx.amount}` : `${tx.amount}`;
+              const statusText = tx.status === 3 ? 'Completed' : tx.status === 2 ? 'Pending' : 'Unknown';
+              return (
+                <View key={tx.transaction_id || i} style={[styles.transactionItem, isRTL && styles.rtlTransactionItem]}>
+                  <View style={[styles.transactionIcon, { backgroundColor: isCommission ? '#10B98115' : isWithdrawal ? '#3B82F615' : '#64748B15' }]}> 
+                    <Icon size={20} color={isCommission ? '#10B981' : isWithdrawal ? '#3B82F6' : '#64748B'} />
+                  </View>
+                  <View style={[styles.transactionInfo, isRTL && styles.rtlTransactionInfo]}>
+                    <View style={[styles.transactionHeader, isRTL && styles.rtlTransactionHeader]}>
+                      <Text style={[styles.transactionDescription, isRTL && styles.rtlText]}>
+                        {description}
+                      </Text>
+                      <Text style={[
+                        styles.transactionAmount,
+                        { color: isCommission ? '#10B981' : isWithdrawal ? '#EF4444' : '#64748B' },
+                        isRTL && styles.rtlText
+                      ]}>
+                        {amount}
+                        <Text style={styles.currency}> DT</Text>
+                      </Text>
+                    </View>
+                    <View style={[styles.transactionFooter, isRTL && styles.rtlTransactionFooter]}>
+                      <Text style={[styles.transactionDate, isRTL && styles.rtlText]}>
+                        {tx.updated_at ? new Date(tx.updated_at).toLocaleDateString() : ''}
+                      </Text>
+                      <Text
+                        style={[styles.transactionOrderId, isRTL && styles.rtlText, { flex: 1 }]}
+                        numberOfLines={1}
+                        ellipsizeMode="tail"
+                      >
+                        {tx.product_name || ''}
+                      </Text>
+                      <View style={[styles.statusBadge, { backgroundColor: isCommission ? '#10B98115' : isWithdrawal ? '#F59E0B15' : '#64748B15', marginLeft: 8, alignSelf: 'center' }]}> 
+                        <Text style={[
+                          styles.statusText,
+                          { color: isCommission ? '#10B981' : isWithdrawal ? '#F59E0B' : '#64748B' },
+                          isRTL && styles.rtlText
+                        ]}>
+                          {statusText}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                </View>
+              );
+            })}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -434,6 +471,92 @@ const styles = StyleSheet.create({
   },
   rtlStatChange: {
     flexDirection: 'row-reverse',
+  },
+  // New styles for transaction items
+  transactionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  rtlTransactionItem: {
+    flexDirection: 'row-reverse',
+  },
+  transactionIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  transactionInfo: {
+    flex: 1,
+  },
+  rtlTransactionInfo: {
+    alignItems: 'flex-end',
+  },
+  transactionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  rtlTransactionHeader: {
+    flexDirection: 'row-reverse',
+  },
+  transactionDescription: {
+    fontSize: 14,
+    fontFamily: 'Inter-Medium',
+    color: '#0F172A',
+    flex: 1,
+  },
+  rtlText: {
+    textAlign: 'right',
+    writingDirection: 'rtl',
+  },
+  transactionAmount: {
+    fontSize: 14,
+    fontFamily: 'Inter-SemiBold',
+  },
+  currency: {
+    fontSize: 12,
+    fontFamily: 'Inter-Regular',
+  },
+  transactionFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  rtlTransactionFooter: {
+    flexDirection: 'row-reverse',
+  },
+  transactionDate: {
+    fontSize: 12,
+    color: '#64748B',
+    fontFamily: 'Inter-Regular',
+  },
+  transactionOrderId: {
+    fontSize: 12,
+    color: '#64748B',
+    fontFamily: 'Inter-Regular',
+  },
+  statusBadge: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+  },
+  statusText: {
+    fontSize: 12,
+    fontFamily: 'Inter-Medium',
   },
 });
 

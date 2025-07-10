@@ -16,6 +16,7 @@ import navigationTheme from './app/navigation/navigationTheme';
 import { AuthProvider, useAuth } from './app/context/AuthContext';
 import { CampaignsProvider } from './app/context/CampaignsContext';
 import { BannersProvider } from './app/context/BannersContext';
+import { TransactionsProvider } from './app/context/TransactionsContext';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -53,13 +54,15 @@ function AppContent() {
       <NavigationContainer theme={navigationTheme}>
         <BannersProvider>
           <CampaignsProvider>
-            {showSplash ? (
-              <SplashScreenn />
-            ) : isAuthenticated ? (
-              <AppNavigator />
-            ) : (
-              <AuthNavigation />
-            )}
+            <TransactionsProvider>
+              {showSplash ? (
+                <SplashScreenn />
+              ) : isAuthenticated ? (
+                <AppNavigator />
+              ) : (
+                <AuthNavigation />
+              )}
+            </TransactionsProvider>
           </CampaignsProvider>
         </BannersProvider>
       </NavigationContainer>
@@ -72,7 +75,9 @@ export default function App() {
     <BannersProvider>
       <AuthProvider>
         <CampaignsProvider>
-          <AppContent />
+          <TransactionsProvider>
+            <AppContent />
+          </TransactionsProvider>
         </CampaignsProvider>
       </AuthProvider>
     </BannersProvider>

@@ -10,7 +10,8 @@ import {
   Alert,
   Modal,
   SafeAreaView,
-  Clipboard
+  Clipboard,
+  RefreshControl
 } from 'react-native';
 import he from 'he';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -31,7 +32,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '../hooks/useLanguage';
 import AppHeader from '../components/AppHeader';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import BannersContext from '../context/BannersContext';
 import CampaignsContext from '../context/CampaignsContext';
 
@@ -66,8 +67,20 @@ const Banners = () => {
   const [selectedBannerCode, setSelectedBannerCode] = useState('');
   const [modalType, setModalType] = useState('code'); // 'code' or 'link'
   const navigation = useNavigation();
-  const { banners, loading, error } = useContext(BannersContext);
+  const { banners, loading, error, loadBanners } = useContext(BannersContext);
+  useFocusEffect(
+    React.useCallback(() => {
+      loadBanners && loadBanners();
+    }, [])
+  );
   const { campaigns } = useContext(CampaignsContext);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await loadBanners();
+    setRefreshing(false);
+  };
 
   const bannerStats = [
     { title: t('banners.totalBanners'), value: '12', icon: ImageIcon, color: '#3B82F6' },
@@ -134,6 +147,7 @@ const Banners = () => {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
       >
         {/* Banner Stats */}
         <View style={[styles.statsContainer, isRTL && styles.rtlStatsContainer]}>
@@ -220,7 +234,7 @@ const Banners = () => {
                 <View style={[styles.bannerMetrics, isRTL && styles.rtlBannerMetrics]}>
                   <View style={styles.metric}>
                     <Text style={[styles.metricValue, isRTL && styles.rtlText]}>
-                      {banner.impressions.toLocaleString()}
+                      {(banner.impressions ?? 0).toLocaleString()}
                     </Text>
                     <Text style={[styles.metricLabel, isRTL && styles.rtlText]}>
                       {t('banners.impressions')}
@@ -228,7 +242,7 @@ const Banners = () => {
                   </View>
                   <View style={styles.metric}>
                     <Text style={[styles.metricValue, isRTL && styles.rtlText]}>
-                      {banner.clicks}
+                      {(banner.clicks ?? 0).toLocaleString()}
                     </Text>
                     <Text style={[styles.metricLabel, isRTL && styles.rtlText]}>
                       {t('banners.clicks')}
@@ -236,7 +250,7 @@ const Banners = () => {
                   </View>
                   <View style={styles.metric}>
                     <Text style={[styles.metricValue, isRTL && styles.rtlText]}>
-                      {banner.ctr}
+                      {(banner.ctr ?? 0).toLocaleString()}
                     </Text>
                     <Text style={[styles.metricLabel, isRTL && styles.rtlText]}>
                       {t('banners.ctr')}
@@ -244,7 +258,7 @@ const Banners = () => {
                   </View>
                   <View style={styles.metric}>
                     <Text style={[styles.metricValue, isRTL && styles.rtlText]}>
-                      {banner.earnings}
+                      {(banner.earnings ?? 0).toLocaleString()}
                     </Text>
                     <Text style={[styles.metricLabel, isRTL && styles.rtlText]}>
                       {t('banners.earnings')}
