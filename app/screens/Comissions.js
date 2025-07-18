@@ -9,7 +9,6 @@ import {
   TextInput,
   Alert,
   Modal,
-  SafeAreaView,
   Dimensions,
   Image,
   ImageBackground,
@@ -46,6 +45,7 @@ import { withdrawFunds } from '../api/withdrawApi';
 import { getAffiliateAccount } from '../api/authApi';
 import TransactionsContext from '../context/TransactionsContext';
 import CampaignsContext from '../context/CampaignsContext';
+import Screen from '../components/Screen';
 // REMOVE: import { getCampaigns } from '../api/campaignApi';
 
 
@@ -304,7 +304,7 @@ export default function Comissions() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, isRTL && styles.rtlContainer]}>
+    <Screen style={[styles.container, isRTL && styles.rtlContainer]}>
       <AppHeader
         title={t('navigation.commissions')}
         variant="gradient"
@@ -683,7 +683,7 @@ export default function Comissions() {
           </View>
         </KeyboardAvoidingView>
       </BottomSheet>
-    </SafeAreaView>
+    </Screen>
   );
 }
 

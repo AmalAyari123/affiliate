@@ -18,6 +18,7 @@ import { useNavigation } from '@react-navigation/native';
 import { loginCustomer } from '../api/authApi';
 import { useAuth } from '../context/AuthContext';
 import ErrorMessage from '../components/ErrorMessage';
+import Screen from '../components/Screen';
 
 const { width } = Dimensions.get('window');
 
@@ -76,14 +77,15 @@ const LoginScreen = () => {
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container} 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <ScrollView 
-        contentContainerStyle={styles.scrollContainer}
-        showsVerticalScrollIndicator={false}
+    <Screen>
+      <KeyboardAvoidingView 
+        style={styles.container} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
+        <ScrollView 
+          contentContainerStyle={styles.scrollContainer}
+          showsVerticalScrollIndicator={false}
+        >
         <View style={styles.logoContainer}>
           <View style={styles.logoRow}>
             <Image
@@ -169,6 +171,7 @@ const LoginScreen = () => {
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
+    </Screen>
   );
 };
 

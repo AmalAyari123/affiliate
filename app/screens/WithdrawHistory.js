@@ -21,6 +21,7 @@ import { useLanguage } from '../hooks/useLanguage';
 import AppHeader from '../components/AppHeader';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { getWithdrawHistory } from '../api/withdrawApi';
+import Screen from '../components/Screen';
 
 const WithdrawHistory = () => {
   const navigation = useNavigation();
@@ -111,7 +112,7 @@ const WithdrawHistory = () => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, isRTL && styles.rtlContainer]}>
+    <Screen style={[styles.container, isRTL && styles.rtlContainer]}>
       <AppHeader
         title="Withdraw History"
         variant="gradient"
@@ -188,7 +189,7 @@ const WithdrawHistory = () => {
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 };
 

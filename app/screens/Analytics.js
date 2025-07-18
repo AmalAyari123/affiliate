@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import {
   DollarSign,
@@ -15,6 +14,7 @@ import {
 } from 'lucide-react-native';
 import { useLanguage } from '../hooks/useLanguage';
 import AppHeader from '../components/AppHeader';
+import Screen from '../components/Screen';
 
 const Analytics = () => {
   const { t } = useTranslation();
@@ -148,7 +148,7 @@ const Analytics = () => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, isRTL && styles.rtlContainer]} edges={['top']}>
+    <Screen style={[styles.container, isRTL && styles.rtlContainer]}>
       <AppHeader
         title={t('navigation.analytics')}
         variant="gradient"
@@ -198,7 +198,7 @@ const Analytics = () => {
         {/* Additional sections remain unchanged - you already wrote them in valid JSX */}
 
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 };
 

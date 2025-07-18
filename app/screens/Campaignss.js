@@ -10,7 +10,6 @@ import {
   Alert,
   RefreshControl,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   Target,
@@ -30,6 +29,7 @@ import AppHeader from '../components/AppHeader';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import CampaignsContext from '../context/CampaignsContext';
 import * as Clipboard from 'expo-clipboard'; // Correct import for Expo Clipboard API
+import Screen from '../components/Screen';
 
 const IMAGE_BASE_URL = 'http://dev.wamia.tn';
 
@@ -70,7 +70,7 @@ const Campaignss = () => {
   const featuredCampaign = campaigns && campaigns.length > 0 ? campaigns[0] : null;
 
   return (
-    <SafeAreaView style={[styles.container, isRTL && styles.rtlContainer]} edges={['top']}>
+    <Screen style={[styles.container, isRTL && styles.rtlContainer]}>
       <AppHeader 
         title={t('navigation.campaigns')}
         variant="gradient"
@@ -176,7 +176,7 @@ const Campaignss = () => {
           })}
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 };
 

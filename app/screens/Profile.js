@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Alert, RefreshControl } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Users, Award, TrendingUp, Mail, Phone, MapPin, Globe, LogOut } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { getCustomerProfile, getAffiliateAccount } from '../api/authApi';
 import { useFocusEffect } from '@react-navigation/native';
+import Screen from '../components/Screen';
 
 const Profile = () => {
   const { signOut } = useAuth();
@@ -80,7 +80,7 @@ const Profile = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <Screen style={styles.container}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -173,12 +173,12 @@ const Profile = () => {
           </TouchableOpacity>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFC' },
+  container: { flex: 1, backgroundColor: '#F8FAFC'  , paddingTop: 25},
   scrollContent: { paddingBottom: 100 },
   profileCard: { margin: 20, borderRadius: 16, overflow: 'hidden' },
   profileGradient: { padding: 20 },

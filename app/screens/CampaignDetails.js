@@ -1,11 +1,11 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, Clipboard, RefreshControl } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft, Share2, Copy, Eye, TrendingUp, DollarSign, Calendar, Users, Target, Gift, Clock, CircleCheck as CheckCircle, Star, CircleAlert as AlertCircle } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useContext, useState } from 'react';
 import TransactionsContext from '../context/TransactionsContext';
+import Screen from '../components/Screen';
 
 const IMAGE_BASE_URL = 'http://dev.wamia.tn';
 
@@ -102,7 +102,7 @@ const CampaignDetails = () => {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <Screen style={styles.container}>
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
@@ -253,7 +253,7 @@ const CampaignDetails = () => {
         {/* ...rest of your sections remain unchanged... */}
 
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 };
 

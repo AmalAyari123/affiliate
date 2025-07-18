@@ -9,7 +9,6 @@ import {
   Image,
   Alert,
   Modal,
-  SafeAreaView,
   Clipboard,
   RefreshControl
 } from 'react-native';
@@ -35,6 +34,7 @@ import AppHeader from '../components/AppHeader';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import BannersContext from '../context/BannersContext';
 import CampaignsContext from '../context/CampaignsContext';
+import Screen from '../components/Screen';
 
 const IMAGE_BASE_URL = 'https://dev.wamia.tn';
 
@@ -164,7 +164,7 @@ const Banners = () => {
   }
 
   return (
-    <SafeAreaView style={[styles.container, isRTL && styles.rtlContainer]}>
+    <Screen style={[styles.container, isRTL && styles.rtlContainer]}>
       <AppHeader
         title={t('navigation.banners')}
         variant="gradient"
@@ -408,7 +408,7 @@ const Banners = () => {
           </View>
         </Modal>
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 };
 

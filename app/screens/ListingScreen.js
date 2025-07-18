@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ImageBackground, Image, RefreshControl } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { TrendingUp, DollarSign, Users, Eye, Bell, Gift, Target, Zap, User } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
@@ -11,6 +10,7 @@ import { getAffiliateAccount, getCustomerProfile } from '../api/authApi';
 import { getTotalClicks } from '../api/campaignApi';
 import TransactionsContext from '../context/TransactionsContext';
 import { useFocusEffect } from '@react-navigation/native';
+import Screen from '../components/Screen';
 
 const Dashboard = () => {
   const { t } = useTranslation();
@@ -101,7 +101,7 @@ const Dashboard = () => {
   ];
 
   return (
-    <SafeAreaView style={[styles.container, isRTL && styles.rtlContainer]} edges={['top']}>
+    <Screen style={[styles.container, isRTL && styles.rtlContainer]}>
       <AppHeader
         title={t('navigation.dashboard')}
         variant="gradient"
@@ -234,7 +234,7 @@ const Dashboard = () => {
             })}
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 };
 

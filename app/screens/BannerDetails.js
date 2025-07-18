@@ -1,11 +1,11 @@
 import React, { useState, useContext } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, Modal, Dimensions } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, Share2, Copy, Eye, TrendingUp, ChartBar as BarChart3, Calendar, Download, Code, Link, X } from 'lucide-react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { SwiperFlatList } from 'react-native-swiper-flatlist';
 import CampaignsContext from '../context/CampaignsContext';
 import he from 'he';
+import Screen from '../components/Screen';
 
 // Utility to extract all image URLs from HTML content
 function extractImageUrls(html) {
@@ -129,7 +129,7 @@ const BannerDetails = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <Screen style={styles.container}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
@@ -189,7 +189,7 @@ const BannerDetails = () => {
           </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 };
 
