@@ -28,6 +28,7 @@
     "plugins": [
       "expo-font",
       "expo-localization"
+<<<<<<< HEAD
     ],
     "extra": {
       "eas": {
@@ -40,5 +41,8 @@
     "updates": {
       "url": "https://u.expo.dev/613f5f11-335e-4b05-9703-2cf39227897a"
     }
+=======
+    ]
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
   }
 }

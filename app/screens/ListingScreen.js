@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ImageBackground, Image, RefreshControl } from 'react-native';
+<<<<<<< HEAD
+=======
+import { SafeAreaView } from 'react-native-safe-area-context';
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
 import { LinearGradient } from 'expo-linear-gradient';
 import { TrendingUp, DollarSign, Users, Eye, Bell, Gift, Target, Zap, User } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
@@ -10,7 +14,10 @@ import { getAffiliateAccount, getCustomerProfile } from '../api/authApi';
 import { getTotalClicks } from '../api/campaignApi';
 import TransactionsContext from '../context/TransactionsContext';
 import { useFocusEffect } from '@react-navigation/native';
+<<<<<<< HEAD
 import Screen from '../components/Screen';
+=======
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
 
 const Dashboard = () => {
   const { t } = useTranslation();
@@ -101,7 +108,11 @@ const Dashboard = () => {
   ];
 
   return (
+<<<<<<< HEAD
     <Screen style={[styles.container, isRTL && styles.rtlContainer]}>
+=======
+    <SafeAreaView style={[styles.container, isRTL && styles.rtlContainer]} edges={['top']}>
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
       <AppHeader
         title={t('navigation.dashboard')}
         variant="gradient"
@@ -234,7 +245,11 @@ const Dashboard = () => {
             })}
         </View>
       </ScrollView>
+<<<<<<< HEAD
     </Screen>
+=======
+    </SafeAreaView>
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
   );
 };
 

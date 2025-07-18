@@ -23,6 +23,7 @@ export const withdrawFunds = async ({ accountHolder, amount, rib, message }) => 
   }
 };
 
+<<<<<<< HEAD
 // Get withdraw history
 export const getWithdrawHistory = async () => {
   try {
@@ -48,4 +49,8 @@ export const getWithdrawHistory = async () => {
 export default {
   withdrawFunds,
   getWithdrawHistory,
+=======
+export default {
+  withdrawFunds,
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
 }; 

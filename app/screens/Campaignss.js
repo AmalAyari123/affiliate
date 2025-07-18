@@ -10,6 +10,10 @@ import {
   Alert,
   RefreshControl,
 } from 'react-native';
+<<<<<<< HEAD
+=======
+import { SafeAreaView } from 'react-native-safe-area-context';
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   Target,
@@ -29,9 +33,14 @@ import AppHeader from '../components/AppHeader';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import CampaignsContext from '../context/CampaignsContext';
 import * as Clipboard from 'expo-clipboard'; // Correct import for Expo Clipboard API
+<<<<<<< HEAD
 import Screen from '../components/Screen';
 
 const IMAGE_BASE_URL = 'http://dev.wamia.tn';
+=======
+
+const IMAGE_BASE_URL = 'http://192.168.1.38';
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
 
 const Campaignss = () => {
   const { t } = useTranslation();
@@ -70,7 +79,11 @@ const Campaignss = () => {
   const featuredCampaign = campaigns && campaigns.length > 0 ? campaigns[0] : null;
 
   return (
+<<<<<<< HEAD
     <Screen style={[styles.container, isRTL && styles.rtlContainer]}>
+=======
+    <SafeAreaView style={[styles.container, isRTL && styles.rtlContainer]} edges={['top']}>
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
       <AppHeader 
         title={t('navigation.campaigns')}
         variant="gradient"
@@ -91,7 +104,11 @@ const Campaignss = () => {
             </Text>
             <View style={styles.featuredCampaign}>
               <ImageBackground
+<<<<<<< HEAD
                 source={{ uri: featuredCampaign.images_url?.[0]?.replace('https://dev.wamia.tn', IMAGE_BASE_URL) }}
+=======
+                source={{ uri: featuredCampaign.images_url?.[0]?.replace('https://192.168.1.38', IMAGE_BASE_URL) }}
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
                 style={styles.featuredImage}
                 imageStyle={styles.featuredImageStyle}
               >
@@ -111,6 +128,17 @@ const Campaignss = () => {
                     <View style={[styles.featuredStats, isRTL && styles.rtlFeaturedStats]}>
                       <View style={styles.featuredStat}>
                         <Text style={[styles.featuredStatValue, isRTL && styles.rtlText]}>
+<<<<<<< HEAD
+=======
+                         
+                        </Text>
+                        <Text style={[styles.featuredStatLabel, isRTL && styles.rtlText]}>
+                          {t('campaigns.commission')}
+                        </Text>
+                      </View>
+                      <View style={styles.featuredStat}>
+                        <Text style={[styles.featuredStatValue, isRTL && styles.rtlText]}>
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
                           {featuredCampaign.discount_amount}%
                         </Text>
                         <Text style={[styles.featuredStatLabel, isRTL && styles.rtlText]}>
@@ -137,7 +165,11 @@ const Campaignss = () => {
                 style={styles.campaignCard}
                 onPress={() => navigation.navigate('CampaignDetails', { campaign })}
               >
+<<<<<<< HEAD
                 <Image source={{ uri: campaign.images_url?.[0]?.replace('https://dev.wamia.tn', IMAGE_BASE_URL) }} style={styles.campaignImage} />
+=======
+                <Image source={{ uri: campaign.images_url?.[0]?.replace('https://192.168.1.38', IMAGE_BASE_URL) }} style={styles.campaignImage} />
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
                 <View style={styles.campaignContent}>
                   <View style={[styles.campaignHeader, isRTL && styles.rtlCampaignHeader]}>
                     <Text style={[styles.campaignName, isRTL && styles.rtlText]}>
@@ -176,7 +208,11 @@ const Campaignss = () => {
           })}
         </View>
       </ScrollView>
+<<<<<<< HEAD
     </Screen>
+=======
+    </SafeAreaView>
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
   );
 };
 
@@ -200,10 +236,14 @@ const styles = StyleSheet.create({
   tierBadge:{ borderRadius:12, paddingHorizontal:8, paddingVertical:4, marginLeft:8 },
   tierText:{ fontSize:12, fontWeight:'600', color:'#000' },
   featuredDescription:{ fontSize:16, color:'#FFF', opacity:0.9, marginBottom:16 },
+<<<<<<< HEAD
   featuredStats:{ flexDirection:'row', justifyContent:'center' },
   featuredStat:{ alignItems:'center', backgroundColor:'rgba(255,255,255,0.2)', borderRadius:12, paddingHorizontal:16, paddingVertical:8 },
   featuredStatValue:{ fontSize:32, fontWeight:'800', color:'#FFF', marginBottom:4, textShadowColor:'rgba(0,0,0,0.3)', textShadowOffset:{width:0,height:2}, textShadowRadius:4 },
   featuredStatLabel:{ fontSize:14, color:'#FFF', opacity:0.9, fontWeight:'600' },
+=======
+  featuredStats:{ flexDirection:'row', justifyContent:'space-between' },
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
   campaignsList:{ paddingHorizontal:20, marginBottom:32 },
   campaignCard:{ backgroundColor:'#FFF', borderRadius:16, marginBottom:16, elevation:2 },
   campaignImage:{ width:'100%', height:120 },

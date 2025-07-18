@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+<<<<<<< HEAD
+=======
+import { SafeAreaView } from 'react-native-safe-area-context';
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
 import { useTranslation } from 'react-i18next';
 import {
   DollarSign,
@@ -14,7 +18,10 @@ import {
 } from 'lucide-react-native';
 import { useLanguage } from '../hooks/useLanguage';
 import AppHeader from '../components/AppHeader';
+<<<<<<< HEAD
 import Screen from '../components/Screen';
+=======
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
 
 const Analytics = () => {
   const { t } = useTranslation();
@@ -148,7 +155,11 @@ const Analytics = () => {
   };
 
   return (
+<<<<<<< HEAD
     <Screen style={[styles.container, isRTL && styles.rtlContainer]}>
+=======
+    <SafeAreaView style={[styles.container, isRTL && styles.rtlContainer]} edges={['top']}>
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
       <AppHeader
         title={t('navigation.analytics')}
         variant="gradient"
@@ -198,7 +209,11 @@ const Analytics = () => {
         {/* Additional sections remain unchanged - you already wrote them in valid JSX */}
 
       </ScrollView>
+<<<<<<< HEAD
     </Screen>
+=======
+    </SafeAreaView>
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
   );
 };
 

@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
 // For real device testing with Expo Go, use your computer's IP address
+<<<<<<< HEAD
 // Using dev.wamia.tn as the base URL
 // You can find your IP by running 'ip addr show' or 'ifconfig' in terminal
 const getBaseURL = () => {
@@ -14,6 +15,17 @@ const getBaseURL = () => {
     // For real device testing, try HTTP first, then HTTPS if needed
     // Your computer's IP address
     return 'https://dev.wamia.tn/rest/default/V1';
+=======
+// Replace '192.168.1.100' with your actual computer's IP address
+// You can find your IP by running 'ip addr show' or 'ifconfig' in terminal
+const getBaseURL = () => {
+  if (Platform.OS === 'web') {
+    return 'http://magento.test/rest/default/V1';
+  } else {
+    // For real device testing, try HTTP first, then HTTPS if needed
+    // Your computer's IP address
+    return 'http://192.168.1.38/rest/default/V1';
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
   }
 };
 

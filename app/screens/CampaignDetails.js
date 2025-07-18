@@ -1,13 +1,22 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, Clipboard, RefreshControl } from 'react-native';
+<<<<<<< HEAD
+=======
+import { SafeAreaView } from 'react-native-safe-area-context';
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
 import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft, Share2, Copy, Eye, TrendingUp, DollarSign, Calendar, Users, Target, Gift, Clock, CircleCheck as CheckCircle, Star, CircleAlert as AlertCircle } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useContext, useState } from 'react';
 import TransactionsContext from '../context/TransactionsContext';
+<<<<<<< HEAD
 import Screen from '../components/Screen';
 
 const IMAGE_BASE_URL = 'http://dev.wamia.tn';
+=======
+
+const IMAGE_BASE_URL = 'http://192.168.1.38';
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
 
 const CampaignDetails = () => {
   const navigation = useNavigation();
@@ -102,7 +111,11 @@ const CampaignDetails = () => {
   }
 
   return (
+<<<<<<< HEAD
     <Screen style={styles.container}>
+=======
+    <SafeAreaView style={styles.container}>
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
@@ -130,7 +143,11 @@ const CampaignDetails = () => {
 
         {/* Campaign Hero */}
         <View style={styles.heroSection}>
+<<<<<<< HEAD
           <Image source={{ uri: campaign.images_url?.[0]?.replace('https://dev.wamia.tn', IMAGE_BASE_URL) }} style={styles.heroImage} />
+=======
+          <Image source={{ uri: campaign.images_url?.[0]?.replace('https://192.168.1.38', IMAGE_BASE_URL) }} style={styles.heroImage} />
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
           <LinearGradient
             colors={['rgba(255, 107, 53, 0.7)', 'rgba(30, 64, 175, 0.7)']}
             style={styles.heroOverlay}
@@ -253,7 +270,11 @@ const CampaignDetails = () => {
         {/* ...rest of your sections remain unchanged... */}
 
       </ScrollView>
+<<<<<<< HEAD
     </Screen>
+=======
+    </SafeAreaView>
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
   );
 };
 

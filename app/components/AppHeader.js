@@ -20,7 +20,11 @@ export function AppHeader({
   title,
   showLogo = true,
   showActions = true,
+<<<<<<< HEAD
   backgroundColor = '#2C3E50',
+=======
+  backgroundColor = '#FFFFFF',
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
   variant = 'default',
   onMenuPress,
 }) {
@@ -68,7 +72,11 @@ export function AppHeader({
           <TouchableOpacity style={styles.notificationButton}>
             <Bell
               size={20}
+<<<<<<< HEAD
               color={variant === 'gradient' ? '#FFFFFF' : '#FFFFFF'}
+=======
+              color={variant === 'gradient' ? '#FFFFFF' : '#64748B'}
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
             />
             <View style={styles.notificationBadge}>
               <Text style={styles.badgeText}>3</Text>
@@ -88,7 +96,11 @@ export function AppHeader({
           translucent
         />
         <LinearGradient
+<<<<<<< HEAD
           colors={['#2C3E50', '#34495E']}
+=======
+          colors={['#FF6B35', '#F59E0B', '#1E40AF']}
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
           style={styles.gradientHeader}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
@@ -185,7 +197,11 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     fontWeight: '700',
+<<<<<<< HEAD
     color: '#FFFFFF',
+=======
+    color: '#0F172A',
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
     fontFamily: 'Inter-Bold',
   },
   gradientText: {
@@ -200,7 +216,11 @@ const styles = StyleSheet.create({
   },
   notificationButton: {
     position: 'relative',
+<<<<<<< HEAD
     backgroundColor: 'rgba(255,255,255,0.2)',
+=======
+    backgroundColor: 'rgba(255,255,255,0.9)',
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
     borderRadius: 12,
     width: 40,
     height: 40,
@@ -216,7 +236,11 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -2,
     right: -2,
+<<<<<<< HEAD
     backgroundColor: '#E74C3C',
+=======
+    backgroundColor: '#FF6B35',
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
     borderRadius: 10,
     width: 20,
     height: 20,

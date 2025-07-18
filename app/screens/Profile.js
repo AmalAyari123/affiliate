@@ -1,11 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Alert, RefreshControl } from 'react-native';
+<<<<<<< HEAD
+=======
+import { SafeAreaView } from 'react-native-safe-area-context';
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
 import { LinearGradient } from 'expo-linear-gradient';
 import { Users, Award, TrendingUp, Mail, Phone, MapPin, Globe, LogOut } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import { getCustomerProfile, getAffiliateAccount } from '../api/authApi';
 import { useFocusEffect } from '@react-navigation/native';
+<<<<<<< HEAD
 import Screen from '../components/Screen';
+=======
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
 
 const Profile = () => {
   const { signOut } = useAuth();
@@ -80,7 +87,11 @@ const Profile = () => {
   };
 
   return (
+<<<<<<< HEAD
     <Screen style={styles.container}>
+=======
+    <SafeAreaView style={styles.container}>
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -173,12 +184,20 @@ const Profile = () => {
           </TouchableOpacity>
         </View>
       </ScrollView>
+<<<<<<< HEAD
     </Screen>
+=======
+    </SafeAreaView>
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
   );
 };
 
 const styles = StyleSheet.create({
+<<<<<<< HEAD
   container: { flex: 1, backgroundColor: '#F8FAFC'  , paddingTop: 25},
+=======
+  container: { flex: 1, backgroundColor: '#F8FAFC' },
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
   scrollContent: { paddingBottom: 100 },
   profileCard: { margin: 20, borderRadius: 16, overflow: 'hidden' },
   profileGradient: { padding: 20 },

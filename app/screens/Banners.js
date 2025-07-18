@@ -9,6 +9,10 @@ import {
   Image,
   Alert,
   Modal,
+<<<<<<< HEAD
+=======
+  SafeAreaView,
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
   Clipboard,
   RefreshControl
 } from 'react-native';
@@ -34,14 +38,20 @@ import AppHeader from '../components/AppHeader';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import BannersContext from '../context/BannersContext';
 import CampaignsContext from '../context/CampaignsContext';
+<<<<<<< HEAD
 import Screen from '../components/Screen';
 
 const IMAGE_BASE_URL = 'https://dev.wamia.tn';
+=======
+
+const IMAGE_BASE_URL = 'http://192.168.1.38';
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
 
 // Utility to extract all image URLs from HTML content
 function extractImageUrls(html) {
   if (!html) return [];
 
+<<<<<<< HEAD
   console.log('Processing banner content:', html);
 
   // Step 1: Decode HTML entities (twice for robustness)
@@ -87,6 +97,23 @@ function extractImageUrls(html) {
   });
 
   console.log('Final extracted URLs:', urls);
+=======
+  // Step 1: Decode HTML entities
+  const decodedContent = he.decode(html);
+
+  // Step 2: Extract all media paths using a tolerant regex
+  const regex = /\{\{\s*media\s+url\s*=\s*"([^"]+)"\s*\}\}/gi;
+  let matches, urls = [];
+
+  while ((matches = regex.exec(decodedContent))) {
+    const relativePath = matches[1];
+
+    // Step 3: Build the full URLs using the base media URL
+    const fullUrl = 'http://192.168.1.38/media/' + relativePath;
+    urls.push(fullUrl);
+  }
+
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
   return urls;
 }
 
@@ -115,8 +142,13 @@ const Banners = () => {
   const bannerStats = [
     { title: t('banners.totalBanners'), value: '12', icon: ImageIcon, color: '#3B82F6' },
     { title: t('banners.totalImpressions'), value: '45.2K', icon: Eye, color: '#10B981' },
+<<<<<<< HEAD
     { title: 'Clicks', value: '2,456', icon: Click, color: '#8B5CF6' },
     { title: 'Earnings', value: '5.4%', icon: TrendingUp, color: '#F59E0B' },
+=======
+    { title: t('banners.totalClicks'), value: '2,456', icon: Click, color: '#8B5CF6' },
+    { title: t('banners.clickRate'), value: '5.4%', icon: TrendingUp, color: '#F59E0B' },
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
   ];
 
   function getStatusColor(status) {
@@ -141,8 +173,14 @@ const Banners = () => {
   }
 
   function copyBannerLink(link) {
+<<<<<<< HEAD
     Clipboard.setString(link);
     Alert.alert(t('common.copied'), t('banners.copyLink'));
+=======
+    setSelectedBannerCode(link);
+    setModalType('link');
+    setShowCodeModal(true);
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
   }
 
   function copyToClipboard(text) {
@@ -164,7 +202,11 @@ const Banners = () => {
   }
 
   return (
+<<<<<<< HEAD
     <Screen style={[styles.container, isRTL && styles.rtlContainer]}>
+=======
+    <SafeAreaView style={[styles.container, isRTL && styles.rtlContainer]}>
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
       <AppHeader
         title={t('navigation.banners')}
         variant="gradient"
@@ -180,6 +222,7 @@ const Banners = () => {
       >
         {/* Banner Stats */}
         <View style={[styles.statsContainer, isRTL && styles.rtlStatsContainer]}>
+<<<<<<< HEAD
           <View style={[styles.statsRow, isRTL && styles.rtlStatsRow]}>
             {bannerStats.slice(0, 2).map((stat, i) => (
               <View key={i} style={styles.statCard}>
@@ -202,6 +245,17 @@ const Banners = () => {
               </View>
             ))}
           </View>
+=======
+          {bannerStats.map((stat, i) => (
+            <View key={i} style={styles.statCard}>
+              <View style={[styles.statIcon, { backgroundColor: `${stat.color}15` }]}>
+                <stat.icon size={20} color={stat.color} />
+              </View>
+              <Text style={[styles.statValue, isRTL && styles.rtlText]}>{stat.value}</Text>
+              <Text style={[styles.statTitle, isRTL && styles.rtlText]}>{stat.title}</Text>
+            </View>
+          ))}
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
         </View>
 
         {/* Performance Chart */}
@@ -238,15 +292,19 @@ const Banners = () => {
           const images = extractImageUrls(banner.content);
           const imageUrl = images[0];
           const campaign = campaigns.find(c => c.campaign_id === banner.campaign_id);
+<<<<<<< HEAD
           
           console.log('Banner:', banner.title, 'Image URL:', imageUrl);
           
+=======
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
           return (
             <TouchableOpacity
               key={banner.banner_id}
               style={styles.bannerCard}
               onPress={() => navigation.navigate('BannerDetails', { banner })}
             >
+<<<<<<< HEAD
               {imageUrl ? (
                 <Image 
                   source={{ uri: imageUrl }} 
@@ -260,6 +318,9 @@ const Banners = () => {
                   <Text style={styles.placeholderText}>No Image</Text>
                 </View>
               )}
+=======
+              <Image source={{ uri: imageUrl }} style={styles.bannerImage} />
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
               <View style={styles.bannerContent}>
                 <View style={[styles.bannerHeader, isRTL && styles.rtlBannerHeader]}>
                   <View style={[styles.bannerInfo, isRTL && styles.rtlBannerInfo]}>
@@ -283,7 +344,11 @@ const Banners = () => {
                         isRTL && styles.rtlText,
                       ]}
                     >
+<<<<<<< HEAD
                       {banner.status === 1 ? 'active' : t('banners.expired')}
+=======
+                      {banner.status === 1 ? t('banners.active') : t('banners.expired')}
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
                     </Text>
                   </View>
                 </View>
@@ -302,7 +367,11 @@ const Banners = () => {
                       {(banner.clicks ?? 0).toLocaleString()}
                     </Text>
                     <Text style={[styles.metricLabel, isRTL && styles.rtlText]}>
+<<<<<<< HEAD
                       clicks
+=======
+                      {t('banners.clicks')}
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
                     </Text>
                   </View>
                   <View style={styles.metric}>
@@ -318,7 +387,11 @@ const Banners = () => {
                       {(banner.earnings ?? 0).toLocaleString()}
                     </Text>
                     <Text style={[styles.metricLabel, isRTL && styles.rtlText]}>
+<<<<<<< HEAD
                       earnings
+=======
+                      {t('banners.earnings')}
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
                     </Text>
                   </View>
                 </View>
@@ -335,7 +408,11 @@ const Banners = () => {
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.actionButton}
+<<<<<<< HEAD
                     onPress={() => copyBannerLink(banner.link || banner.banner_link || banner.directLink)}
+=======
+                    onPress={() => copyBannerLink(banner.banner_link || banner.directLink)}
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
                   >
                     <Link size={16} color="#10B981" />
                     <Text style={[styles.actionButtonText, isRTL && styles.rtlText]}>
@@ -408,7 +485,11 @@ const Banners = () => {
           </View>
         </Modal>
       </ScrollView>
+<<<<<<< HEAD
     </Screen>
+=======
+    </SafeAreaView>
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
   );
 };
 
@@ -424,14 +505,21 @@ const styles = StyleSheet.create({
     paddingBottom: 100, // Added padding to ensure content is not cut off by tab bar
   },
   statsContainer: {
+<<<<<<< HEAD
+=======
+    flexDirection: 'row',
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
     paddingHorizontal: 20,
     marginBottom: 32,
     marginTop: 16,
   },
+<<<<<<< HEAD
   statsRow: {
     flexDirection: 'row',
     marginBottom: 12,
   },
+=======
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
   statCard: {
     flex: 1,
     backgroundColor: '#FFFFFF',
@@ -544,6 +632,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 120,
   },
+<<<<<<< HEAD
   placeholderImage: {
     backgroundColor: '#F1F5F9',
     justifyContent: 'center',
@@ -555,6 +644,8 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Regular',
     marginTop: 4,
   },
+=======
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
   bannerContent: {
     padding: 16,
   },
@@ -731,9 +822,12 @@ const styles = StyleSheet.create({
     writingDirection: 'rtl',
   },
   rtlStatsContainer: {
+<<<<<<< HEAD
     // RTL support for 2x2 grid layout
   },
   rtlStatsRow: {
+=======
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
     flexDirection: 'row-reverse',
   },
   rtlChartHeader: {

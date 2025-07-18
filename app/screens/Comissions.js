@@ -9,6 +9,10 @@ import {
   TextInput,
   Alert,
   Modal,
+<<<<<<< HEAD
+=======
+  SafeAreaView,
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
   Dimensions,
   Image,
   ImageBackground,
@@ -45,7 +49,10 @@ import { withdrawFunds } from '../api/withdrawApi';
 import { getAffiliateAccount } from '../api/authApi';
 import TransactionsContext from '../context/TransactionsContext';
 import CampaignsContext from '../context/CampaignsContext';
+<<<<<<< HEAD
 import Screen from '../components/Screen';
+=======
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
 // REMOVE: import { getCampaigns } from '../api/campaignApi';
 
 
@@ -304,7 +311,11 @@ export default function Comissions() {
   };
 
   return (
+<<<<<<< HEAD
     <Screen style={[styles.container, isRTL && styles.rtlContainer]}>
+=======
+    <SafeAreaView style={[styles.container, isRTL && styles.rtlContainer]}>
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
       <AppHeader
         title={t('navigation.commissions')}
         variant="gradient"
@@ -397,18 +408,29 @@ export default function Comissions() {
             </Text>
           </TouchableOpacity>
 
+<<<<<<< HEAD
           <TouchableOpacity 
             style={styles.actionCard}
             onPress={() => navigation.navigate('WithdrawHistory')}
           >
+=======
+          <TouchableOpacity style={styles.actionCard}>
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
             <View style={[styles.actionIcon, { backgroundColor: '#10B98115' }]}>
               <Calendar size={24} color="#10B981" />
             </View>
             <Text style={[styles.actionTitle, isRTL && styles.rtlText]}>
+<<<<<<< HEAD
               Withdraw History
             </Text>
             <Text style={[styles.actionSubtitle, isRTL && styles.rtlText]}>
               View your withdrawal requests
+=======
+              {t('commissions.paymentSchedule')}
+            </Text>
+            <Text style={[styles.actionSubtitle, isRTL && styles.rtlText]}>
+              {t('commissions.viewDates')}
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
             </Text>
           </TouchableOpacity>
         </View>
@@ -683,7 +705,11 @@ export default function Comissions() {
           </View>
         </KeyboardAvoidingView>
       </BottomSheet>
+<<<<<<< HEAD
     </Screen>
+=======
+    </SafeAreaView>
+>>>>>>> 506d52b022bc0baa29db569f23a9cd4836ceb908
   );
 }
 
